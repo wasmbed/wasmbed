@@ -1,6 +1,12 @@
-use kubelet_client::types::{PodId, WasmModule, CreatePodRequest};
 use minicbor::encode::Encode;
 use minicbor::decode::Decode;
+use kubelet_client::types::{
+    PodId,
+    WasmModule,
+    CreatePodRequest,
+    CreatePodResponse,
+    CreatePodResult,
+};
 
 const POD_ID: PodId = PodId::from_bytes([
     0xa1, 0xa2, 0xa3, 0xa4, 0xb1, 0xb2, 0xc1, 0xc2,
@@ -21,6 +27,16 @@ const CREATE_POD_REQUEST: CreatePodRequest<WASM_MODULE_SIZE> = CreatePodRequest 
     wasm_module: WASM_MODULE
 };
 
+const SUCCESSFUL_CREATE_POD_RESPONSE: CreatePodResponse = CreatePodResponse {
+    pod_id: POD_ID,
+    result: CreatePodResult::Success,
+};
+
+const UNSUCCESSFUL_CREATE_POD_RESPONSE: CreatePodResponse = CreatePodResponse {
+    pod_id: POD_ID,
+    result: CreatePodResult::Failure,
+};
+
 fn encode_decode<T>(v: &T)
 where
     T: PartialEq
@@ -38,4 +54,6 @@ fn test() {
     encode_decode(&POD_ID);
     encode_decode(&WASM_MODULE);
     encode_decode(&CREATE_POD_REQUEST);
+    encode_decode(&SUCCESSFUL_CREATE_POD_RESPONSE);
+    encode_decode(&UNSUCCESSFUL_CREATE_POD_RESPONSE);
 }

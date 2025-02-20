@@ -39,3 +39,15 @@ pub struct CreatePodRequest<const WASM_MODULE_SIZE: usize> {
     pub pod_id: PodId,
     pub wasm_module: WasmModule<WASM_MODULE_SIZE>,
 }
+
+#[derive(Debug, PartialEq)]
+pub struct CreatePodResponse {
+    pub pod_id: PodId,
+    pub result: CreatePodResult,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum CreatePodResult {
+    Success,
+    Failure,
+}
