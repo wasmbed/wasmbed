@@ -33,3 +33,9 @@ impl<const N: usize> WasmModule<N> {
         bytes.try_into().ok().map(Self)
     }
 }
+
+#[derive(Debug, PartialEq)]
+pub struct CreatePodRequest<const WASM_MODULE_SIZE: usize> {
+    pub pod_id: PodId,
+    pub wasm_module: WasmModule<WASM_MODULE_SIZE>,
+}
