@@ -15,10 +15,10 @@ default-features = false
 [dependencies.uuid]
 version = "1.13.2"
 default-features = false
-features = ["v4"]
+features = [ "v4" ]
 
 [dev-dependencies]
 
 [dev-dependencies.minicbor]
 version = "*"
-features = ["alloc"]
+features = [ "alloc" ]

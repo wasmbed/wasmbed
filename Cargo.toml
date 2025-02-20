@@ -6,7 +6,7 @@ members = [
 
 [workspace.package]
 version = "0.0.1"
-authors = ["Tancredi Orlando <tancredi.orlando@gmail.com>"]
+authors = [ "Tancredi Orlando <tancredi.orlando@gmail.com>" ]
 edition = "2021"
 repository = "https://github.com/turlando/wasmed"
 license = "AGPL-3.0"
