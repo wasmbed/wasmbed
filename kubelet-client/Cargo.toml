@@ -9,11 +9,11 @@ license.workspace = true
 [dependencies]
 
 [dependencies.minicbor]
-version = "0.25.1"
+version = "0.26.0"
 default-features = false
 
 [dependencies.uuid]
-version = "1.13.2"
+version = "1.14.0"
 default-features = false
 features = [ "v4" ]
 
