@@ -1,6 +1,9 @@
 use minicbor::encode::Encode;
 use minicbor::decode::Decode;
 use kubelet_client::types::{
+    Version,
+    Envelope,
+    Message,
     PodId,
     WasmModule,
     CreatePodRequest,
@@ -37,6 +40,33 @@ const UNSUCCESSFUL_CREATE_POD_RESPONSE: CreatePodResponse = CreatePodResponse {
     result: CreatePodResult::Failure,
 };
 
+const CREATE_POD_REQUEST_MESSAGE: Message<WASM_MODULE_SIZE> =
+    Message::CreatePodRequest(CREATE_POD_REQUEST);
+
+const SUCCESSFUL_CREATE_POD_RESPONSE_MESSAGE: Message<WASM_MODULE_SIZE> =
+    Message::CreatePodResponse(SUCCESSFUL_CREATE_POD_RESPONSE);
+
+const UNSUCCESSFUL_CREATE_POD_RESPONSE_MESSAGE: Message<WASM_MODULE_SIZE> =
+    Message::CreatePodResponse(UNSUCCESSFUL_CREATE_POD_RESPONSE);
+
+const CREATE_POD_REQUEST_MESSAGE_ENVELOPE: Envelope<Message<WASM_MODULE_SIZE>> =
+    Envelope {
+        version: Version::V0,
+        body: Message::CreatePodRequest(CREATE_POD_REQUEST),
+    };
+
+const SUCCESSFUL_CREATE_POD_RESPONSE_MESSAGE_ENVELOPE: Envelope<Message<WASM_MODULE_SIZE>> =
+    Envelope {
+        version: Version::V0,
+        body: Message::CreatePodResponse(SUCCESSFUL_CREATE_POD_RESPONSE),
+    };
+
+const UNSUCCESSFUL_CREATE_POD_RESPONSE_MESSAGE_ENVELOPE: Envelope<Message<WASM_MODULE_SIZE>> =
+    Envelope {
+        version: Version::V0,
+        body: Message::CreatePodResponse(UNSUCCESSFUL_CREATE_POD_RESPONSE),
+    };
+
 fn encode_decode<T>(v: &T)
 where
     T: PartialEq
@@ -56,4 +86,10 @@ fn test() {
     encode_decode(&CREATE_POD_REQUEST);
     encode_decode(&SUCCESSFUL_CREATE_POD_RESPONSE);
     encode_decode(&UNSUCCESSFUL_CREATE_POD_RESPONSE);
+    encode_decode(&CREATE_POD_REQUEST_MESSAGE);
+    encode_decode(&SUCCESSFUL_CREATE_POD_RESPONSE_MESSAGE);
+    encode_decode(&UNSUCCESSFUL_CREATE_POD_RESPONSE_MESSAGE);
+    encode_decode(&CREATE_POD_REQUEST_MESSAGE_ENVELOPE);
+    encode_decode(&SUCCESSFUL_CREATE_POD_RESPONSE_MESSAGE_ENVELOPE);
+    encode_decode(&UNSUCCESSFUL_CREATE_POD_RESPONSE_MESSAGE_ENVELOPE);
 }
