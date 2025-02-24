@@ -26,7 +26,6 @@ fn main() {
         Format::Hexadecimal =>
             hex::decode(input.trim()).unwrap(),
         Format::Decimal => input
-            .trim()
             .split_whitespace()
             .map(|s| s.parse::<u8>().unwrap())
             .collect(),
