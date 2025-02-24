@@ -49,16 +49,14 @@ impl<Ctx> Encode<Ctx> for MessageKind {
     }
 }
 
-impl<Ctx, const WASM_MODULE_SIZE: usize> Encode<Ctx>
-    for Message<WASM_MODULE_SIZE>
-{
+impl<Ctx> Encode<Ctx> for Message {
     fn encode<W: Write>(
         &self,
         e: &mut Encoder<W>,
         _ctx: &mut Ctx
     ) -> Result<(), Error<W::Error>> {
         e.array(2)?
-            .encode(&self.kind())?;
+            .encode(self.kind())?;
         match self {
             Self::CreatePodRequest(v) => e.encode(v)?,
             Self::CreatePodResponse(v) => e.encode(v)?,
@@ -78,20 +76,18 @@ impl<Ctx> Encode<Ctx> for PodId {
     }
 }
 
-impl<Ctx, const N: usize> Encode<Ctx> for WasmModule<N> {
+impl<Ctx> Encode<Ctx> for WasmModule {
     fn encode<W: Write>(
         &self,
         e: &mut Encoder<W>,
         _ctx: &mut Ctx
     ) -> Result<(), Error<W::Error>> {
-        e.bytes(self.as_bytes())?;
+        e.bytes(self.as_slice())?;
         Ok(())
     }
 }
 
-impl<Ctx, const WASM_MODULE_SIZE: usize> Encode<Ctx>
-    for CreatePodRequest<WASM_MODULE_SIZE>
-{
+impl<Ctx> Encode<Ctx> for CreatePodRequest {
     fn encode<W: Write>(
         &self,
         e: &mut Encoder<W>,

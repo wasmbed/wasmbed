@@ -17,8 +17,6 @@ const INVALID_MESSAGE_KIND_ERROR: &str =
     "Invalid message kind";
 const INVALID_UUID_LENGTH_ERROR: &str =
     "Failed to decode PodId: invalid UUID length";
-const INVALID_WASM_MODULE_SIZE_ERROR: &str =
-    "Failed to decode WasmModule: incorrect size";
 const INDEFINITE_LENGTH_ARRAY_ERROR: &str =
     "Expected a fixed-size array but found an indefinite-length array";
 const INVALID_ARRAY_LENGTH_ERROR: &str =
@@ -64,9 +62,7 @@ impl<'b, Ctx> Decode<'b, Ctx> for MessageKind {
     }
 }
 
-impl<'b, Ctx, const WASM_MODULE_SIZE: usize> Decode<'b, Ctx>
-    for Message<WASM_MODULE_SIZE>
-{
+impl<'b, Ctx> Decode<'b, Ctx> for Message {
     fn decode(
         d: &mut Decoder<'b>,
         _ctx: &mut Ctx
@@ -94,19 +90,16 @@ impl<'b, Ctx> Decode<'b, Ctx> for PodId {
     }
 }
 
-impl<'b, Ctx, const N: usize> Decode<'b, Ctx> for WasmModule<N> {
+impl<'b, Ctx> Decode<'b, Ctx> for WasmModule {
     fn decode(
         d: &mut Decoder<'b>,
         _ctx: &mut Ctx
     ) -> Result<Self, Error> {
-        Self::from_slice(d.bytes()?)
-            .ok_or(Error::message(INVALID_WASM_MODULE_SIZE_ERROR))
+        Ok(Self::from_slice(d.bytes()?))
     }
 }
 
-impl<'b, Ctx, const WASM_MODULE_SIZE: usize> Decode<'b, Ctx>
-    for CreatePodRequest<WASM_MODULE_SIZE>
-{
+impl<'b, Ctx> Decode<'b, Ctx> for CreatePodRequest {
     fn decode(
         d: &mut Decoder<'b>,
         _ctx: &mut Ctx

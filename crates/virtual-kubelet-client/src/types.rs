@@ -1,6 +1,7 @@
+use alloc::vec::Vec;
 use uuid::Uuid;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Version {
     V0,
 }
@@ -20,13 +21,13 @@ impl Version {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Envelope<T> {
     pub version: Version,
     pub body: T,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum MessageKind {
     CreatePodRequest,
     CreatePodResponse,
@@ -49,13 +50,13 @@ impl MessageKind {
     }
 }
 
-#[derive(Debug, PartialEq)]
-pub enum Message<const WASM_MODULE_SIZE: usize> {
-    CreatePodRequest(CreatePodRequest<WASM_MODULE_SIZE>),
+#[derive(Clone, Debug, PartialEq)]
+pub enum Message {
+    CreatePodRequest(CreatePodRequest),
     CreatePodResponse(CreatePodResponse),
 }
 
-impl<const WASM_MESSAGE_SIZE: usize> Message<WASM_MESSAGE_SIZE> {
+impl Message {
     pub fn kind(&self) -> MessageKind {
         match self {
             Message::CreatePodRequest(_)  => MessageKind::CreatePodRequest,
@@ -64,7 +65,7 @@ impl<const WASM_MESSAGE_SIZE: usize> Message<WASM_MESSAGE_SIZE> {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct PodId(Uuid);
 
 impl PodId {
@@ -81,30 +82,26 @@ impl PodId {
     }
 }
 
-#[derive(Debug, PartialEq)]
-pub struct WasmModule<const N: usize>([u8; N]);
+#[derive(Clone, Debug, PartialEq)]
+pub struct WasmModule(Vec<u8>);
 
-impl<const N: usize> WasmModule<N> {
-    pub const fn from_bytes(bytes: [u8; N]) -> Self {
-        Self(bytes)
+impl WasmModule {
+    pub fn from_slice(bytes: &[u8]) -> Self {
+        WasmModule(bytes.to_vec())
     }
 
-    pub const fn as_bytes(&self) -> &[u8; N] {
-        &self.0
-    }
-
-    pub fn from_slice(bytes: &[u8]) -> Option<Self> {
-        bytes.try_into().ok().map(Self)
+    pub fn as_slice(&self) -> &[u8]{
+        self.0.as_slice()
     }
 }
 
-#[derive(Debug, PartialEq)]
-pub struct CreatePodRequest<const WASM_MODULE_SIZE: usize> {
+#[derive(Clone, Debug, PartialEq)]
+pub struct CreatePodRequest {
     pub pod_id: PodId,
-    pub wasm_module: WasmModule<WASM_MODULE_SIZE>,
+    pub wasm_module: WasmModule,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum CreatePodResult {
     Success,
     Failure,
@@ -127,7 +124,7 @@ impl CreatePodResult {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct CreatePodResponse {
     pub pod_id: PodId,
     pub result: CreatePodResult,
