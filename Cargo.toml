@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
-    "kubelet-client",
+    "crates/virtual-kubelet-client",
 ]
 
 [workspace.package]
