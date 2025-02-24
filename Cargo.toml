@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     "crates/virtual-kubelet-client",
+    "tools/virtual-kubelet-cbor-inspect"
 ]
 
 [workspace.package]
