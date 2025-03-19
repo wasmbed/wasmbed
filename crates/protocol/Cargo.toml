@@ -9,16 +9,16 @@ license.workspace = true
 [dependencies]
 
 [dependencies.minicbor]
-version = "0.26.0"
+version = "0.26.2"
 default-features = false
 
 [dependencies.uuid]
-version = "1.14.0"
+version = "1.16.0"
 default-features = false
 features = [ "v4" ]
 
 [dev-dependencies]
 
 [dev-dependencies.minicbor]
-version = "*"
+version = "0.26.2"
 features = [ "alloc" ]
