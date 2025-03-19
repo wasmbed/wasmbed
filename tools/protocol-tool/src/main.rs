@@ -1,5 +1,6 @@
 use clap::{Parser, ValueEnum};
-use wasmbed_protocol::{Envelope, decode};
+use wasmbed_protocol::types::Envelope;
+use minicbor::decode;
 
 #[derive(Parser)]
 #[command()]
