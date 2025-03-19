@@ -1,5 +1,5 @@
 [package]
-name = "virtual-kubelet-cbor-inspect"
+name = "wasmbed-protocol-tool"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
@@ -9,8 +9,8 @@ license.workspace = true
 [dependencies]
 hex = "0.4.3"
 
-[dependencies.virtual-kubelet-client]
-path = "../../crates/virtual-kubelet-client"
+[dependencies.wasmbed-protocol]
+path = "../../crates/protocol"
 
 [dependencies.clap]
 version = "4.5.30"

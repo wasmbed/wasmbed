@@ -229,16 +229,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "virtual-kubelet-cbor-inspect"
-version = "0.0.1"
+name = "wasi"
+version = "0.13.3+wasi-0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "26816d2e1a4a36a2940b96c5296ce403917633dff8f3440e9b236ed6f6bacad2"
 dependencies = [
- "clap",
- "hex",
- "virtual-kubelet-client",
+ "wit-bindgen-rt",
 ]
 
 [[package]]
-name = "virtual-kubelet-client"
+name = "wasmbed-protocol"
 version = "0.0.1"
 dependencies = [
  "minicbor",
@@ -246,12 +246,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "wasi"
-version = "0.13.3+wasi-0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "26816d2e1a4a36a2940b96c5296ce403917633dff8f3440e9b236ed6f6bacad2"
+name = "wasmbed-protocol-tool"
+version = "0.0.1"
 dependencies = [
- "wit-bindgen-rt",
+ "clap",
+ "hex",
+ "wasmbed-protocol",
 ]
 
 [[package]]

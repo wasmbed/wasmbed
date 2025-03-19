@@ -1,8 +1,8 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/virtual-kubelet-client",
-    "tools/virtual-kubelet-cbor-inspect"
+    "crates/protocol",
+    "tools/protocol-tool"
 ]
 
 [workspace.package]

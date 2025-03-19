@@ -1,5 +1,5 @@
 use clap::{Parser, ValueEnum};
-use virtual_kubelet_client::{Envelope, decode};
+use wasmbed_protocol::{Envelope, decode};
 
 #[derive(Parser)]
 #[command()]

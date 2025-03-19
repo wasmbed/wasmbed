@@ -1,18 +1,5 @@
 # wasmed
 
-## Project Structure
-
-- Libraries
-  - [virtual-kubelet-client][virtual-kubelet-client]: Client for the
-    communication protocol used by the Virtual Kubelet
-- Tooling
-  - [virtual-kubelet-cbor-inspect][virtual-kubelet-cbor-inspect]: Tool for
-    deserializing CBOR data and inspecting the encoded Virtual Kubelet
-    communication protocol.
-
-[virtual-kubelet-client]: ./crates/virtual-kubelet-client
-[virtual-kubelet-cbor-inspect]: ./tools/virtual-kubelet-cbor-inspect
-
 ## Development Environment
 
 This project uses Nix to manage the development environment, ensuring
@@ -54,6 +41,5 @@ the tool with any additional arguments you need.
 cargo run -p <tool-package-name> -- <args>
 ```
 
-- \<tool-package-name\>: The name of the tool's package (e.g.,
-virtual-kubelet-cbor-inspect).
+- \<tool-package-name\>: The name of the tool's package (e.g., wasmbed-protocol-tool).
 - \<args\>: Any arguments that the tool accepts (e.g. --hex).

@@ -1,6 +1,6 @@
 use minicbor::encode::Encode;
 use minicbor::decode::Decode;
-use virtual_kubelet_client::types::{
+use wasmbed_protocol::types::{
     Version,
     Envelope,
     Message,
