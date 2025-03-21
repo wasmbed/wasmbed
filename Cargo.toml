@@ -2,7 +2,7 @@
 resolver = "2"
 members = [
     "crates/protocol",
-    "tools/protocol-tool"
+    "crates/protocol-tool",
 ]
 
 [workspace.package]
