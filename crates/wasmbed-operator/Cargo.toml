@@ -1,0 +1,33 @@
+[package]
+name = "wasmbed-operator"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+futures = "0.3.31"
+schemars = "0.8.22"
+serde_json = "1.0.140"
+
+[dependencies.k8s-openapi]
+version = "0.24.0"
+features = [ "v1_32" ]
+
+[dependencies.kube]
+version = "0.99.0"
+default-features = false
+features = [ "client", "derive", "runtime" ]
+
+[dependencies.serde]
+version = "1.0.219"
+features = [ "derive" ]
+
+[dependencies.tokio]
+version = "1.44.1"
+features = [ "macros", "rt" ]
+
+[dependencies.wasmbed-types]
+path = "../wasmbed-types"
+features = [ "serde", "schemars" ]
