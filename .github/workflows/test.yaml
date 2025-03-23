@@ -1,0 +1,42 @@
+name: Build and Test
+on:
+  push:
+    branches:
+      - "*"
+    # don't run on tags, run on commits
+    # https://github.com/orgs/community/discussions/25615
+    tags-ignore:
+      - "**"
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  nix_conf: |
+    substituters = https://cache.nixos.org/ https://nix-community.cachix.org
+    trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=
+jobs:
+  test:
+    name: Run tests on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-24.04
+          - macos-14
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+      - name: Install Nix
+        uses: nixbuild/nix-quick-install-action@v30
+        with:
+          nix_conf: ${{ env.nix_conf }}
+      - name: Setup Nix cache
+        uses: nix-community/cache-nix-action@v6
+        with:
+          primary-key: wasmbed-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('flake.lock', 'Cargo.lock') }}
+          restore-prefixes-first-match: wasmbed-${{ runner.os }}-${{ runner.arch }}-
+          nix: true
+      - name: Run the tests
+        run: nix flake check
