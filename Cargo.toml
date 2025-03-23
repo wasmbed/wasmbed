@@ -1,8 +1,8 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/protocol",
-    "crates/protocol-tool",
+    "crates/wasmbed-protocol",
+    "crates/wasmbed-protocol-tool",
 ]
 
 [workspace.package]
