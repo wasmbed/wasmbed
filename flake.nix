@@ -53,7 +53,10 @@
     dockerImages.wasmbed-operator = pkgs.dockerTools.buildLayeredImage {
       name = "wasmbed-operator";
       config = {
-        Cmd = [ "${self.packages.${system}.wasmbed-operator}/bin/wasmbed-operator" ];
+        Cmd = [
+          "${self.packages.${system}.wasmbed-operator}/bin/wasmbed-operator"
+          "controller"
+        ];
       };
     };
   });
