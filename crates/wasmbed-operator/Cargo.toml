@@ -22,8 +22,7 @@ features = [ "v1_32" ]
 
 [dependencies.kube]
 version = "0.99.0"
-default-features = false
-features = [ "client", "derive", "runtime" ]
+features = [ "derive", "runtime" ]
 
 [dependencies.serde]
 version = "1.0.219"
