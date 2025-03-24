@@ -4,6 +4,7 @@ members = [
     "crates/wasmbed-operator",
     "crates/wasmbed-protocol",
     "crates/wasmbed-protocol-tool",
+    "crates/wasmbed-test-utils",
     "crates/wasmbed-types",
 ]
 

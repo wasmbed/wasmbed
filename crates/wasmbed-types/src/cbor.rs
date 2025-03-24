@@ -31,25 +31,15 @@ impl<'b, Ctx> Decode<'b, Ctx> for DeviceId {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use wasmbed_test_utils::minicbor::assert_encode_decode;
 
-    fn encode_decode<T>(v: &T)
-    where
-        T: PartialEq
-         + std::fmt::Debug
-         + Encode<()>
-         + for<'b> Decode<'b, ()>
-    {
-        let encoded = minicbor::to_vec(v).unwrap();
-        let decoded = minicbor::decode(&encoded).unwrap();
-        assert_eq!(*v, decoded);
-    }
+    const POD_ID: DeviceId = DeviceId::from_bytes([
+        0xa1, 0xa2, 0xa3, 0xa4, 0xb1, 0xb2, 0xc1, 0xc2,
+        0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0xd7, 0xd8,
+    ]);
 
     #[test]
     fn test_device_id() {
-        let pod_id = DeviceId::from_bytes([
-            0xa1, 0xa2, 0xa3, 0xa4, 0xb1, 0xb2, 0xc1, 0xc2,
-            0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0xd7, 0xd8,
-        ]);
-        encode_decode(&pod_id);
+        assert_encode_decode(&POD_ID);
     }
 }

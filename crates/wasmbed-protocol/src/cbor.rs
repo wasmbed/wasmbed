@@ -277,3 +277,131 @@ impl<'b, Ctx> Decode<'b, Ctx> for CreatePodResult {
             .ok_or(DError::message(INVALID_CREATE_POD_RESULT_TAG_ERROR))
     }
 }
+
+// -----------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use wasmbed_test_utils::minicbor::assert_encode_decode;
+
+    const POD_ID: PodId = PodId::from_bytes([
+        0xa1, 0xa2, 0xa3, 0xa4, 0xb1, 0xb2, 0xc1, 0xc2,
+        0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0xd7, 0xd8,
+    ]);
+
+    const WASM_MODULE_BYTES: [u8; 24] = [
+        0x00, 0x61, 0x73, 0x6D,             // Magic Header "\0asm"
+        0x01, 0x00, 0x00, 0x00,             // Wasm Version (1)
+        0x01, 0x04, 0x01, 0x60, 0x00, 0x00, // Type section (empty function)
+        0x03, 0x02, 0x01, 0x00,             // Function section (one function)
+        0x0A, 0x04, 0x01, 0x02, 0x00, 0x0B, // Code section
+    ];
+
+    #[test]
+    fn test_pod_id() {
+        assert_encode_decode(&POD_ID);
+    }
+
+    #[test]
+    fn test_wasm_module() {
+        assert_encode_decode(&WasmModule::from_slice(&WASM_MODULE_BYTES));
+    }
+
+    #[test]
+    fn test_create_pod_request() {
+        assert_encode_decode(
+            &CreatePodRequest {
+                pod_id: POD_ID,
+                wasm_module: WasmModule::from_slice(&WASM_MODULE_BYTES),
+            }
+        );
+    }
+
+    #[test]
+    fn test_successful_create_pod_response() {
+        assert_encode_decode(
+            &CreatePodResponse {
+                pod_id: POD_ID,
+                result: CreatePodResult::Success,
+            }
+        );
+    }
+
+    #[test]
+    fn test_unsuccessful_create_pod_response() {
+        assert_encode_decode(&CreatePodResponse {
+            pod_id: POD_ID,
+            result: CreatePodResult::Failure,
+        });
+    }
+
+    #[test]
+    fn test_create_pod_request_message() {
+        assert_encode_decode(
+            &Message::CreatePodRequest(CreatePodRequest {
+                pod_id: POD_ID,
+                wasm_module: WasmModule::from_slice(&WASM_MODULE_BYTES),
+            })
+        );
+    }
+
+    #[test]
+    fn test_successful_create_pod_response_message() {
+        assert_encode_decode(
+            &Message::CreatePodResponse(CreatePodResponse {
+                pod_id: POD_ID,
+                result: CreatePodResult::Success,
+            })
+        );
+    }
+
+    #[test]
+    fn test_unsuccessful_create_pod_response_message() {
+        assert_encode_decode(
+            &Message::CreatePodResponse(CreatePodResponse {
+                pod_id: POD_ID,
+                result: CreatePodResult::Failure,
+            })
+        );
+    }
+
+    #[test]
+    fn test_create_pod_request_message_envelope() {
+        assert_encode_decode(
+            &Envelope {
+                version: Version::V0,
+                body: Message::CreatePodRequest(CreatePodRequest {
+                    pod_id: POD_ID,
+                    wasm_module: WasmModule::from_slice(&WASM_MODULE_BYTES),
+                }),
+            }
+        );
+    }
+
+    #[test]
+    fn test_successful_create_pod_response_message_envelope() {
+        assert_encode_decode(
+            &Envelope {
+                version: Version::V0,
+                body: Message::CreatePodResponse(CreatePodResponse {
+                    pod_id: POD_ID,
+                    result: CreatePodResult::Success,
+                }),
+            }
+        );
+    }
+
+    #[test]
+    fn test_unsuccessful_create_pod_response_message_envelope() {
+        assert_encode_decode(
+            &Envelope {
+                version: Version::V0,
+                body: Message::CreatePodResponse(CreatePodResponse {
+                    pod_id: POD_ID,
+                    result: CreatePodResult::Failure,
+                }),
+            }
+        );
+    }
+}

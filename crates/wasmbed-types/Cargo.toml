@@ -36,6 +36,6 @@ optional = true
 
 [dev-dependencies]
 
-[dev-dependencies.minicbor]
-version = "0.26.3"
-features = [ "alloc" ]
+[dev-dependencies.wasmbed-test-utils]
+path = "../wasmbed-test-utils"
+features = [ "minicbor" ]

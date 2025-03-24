@@ -1709,6 +1709,7 @@ version = "0.0.1"
 dependencies = [
  "minicbor",
  "uuid",
+ "wasmbed-test-utils",
 ]
 
 [[package]]
@@ -1722,6 +1723,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "wasmbed-test-utils"
+version = "0.0.1"
+dependencies = [
+ "minicbor",
+]
+
+[[package]]
 name = "wasmbed-types"
 version = "0.0.1"
 dependencies = [
@@ -1730,6 +1738,7 @@ dependencies = [
  "serde",
  "serde_json",
  "uuid",
+ "wasmbed-test-utils",
 ]
 
 [[package]]
