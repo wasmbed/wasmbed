@@ -1,0 +1,80 @@
+@startuml
+title Application Deployment Workflow
+
+skinparam wrapMessageWidth 200
+
+actor    "User"                  as User
+boundary "Kubernetes API Server" as KubeApi
+database "etcd"                  as Etcd
+control  "Controller"            as Controller
+boundary "Gateway"               as Gateway
+entity   "Microcontroller Unit"  as MCU
+
+User ->> KubeApi: Apply ~~Application~~ manifest
+
+alt Successful validation
+  KubeApi -> Etcd: Create ~~Application~~\n//Pending//
+  rnote right Etcd: Follow **Controller Phase**
+else Invalid manifest
+  KubeApi -->> User: Error: Invalid resource definition
+end
+
+== Controller Phase ==
+
+Etcd ->> Controller: Notify: New ~~Application~~
+activate Controller
+
+Controller -> Controller: Reconcile ~~Application~~
+Controller -> Etcd: Query for matching ~~Device~~ resources
+Etcd --> Controller: Return matching ~~Device~~ resources
+
+alt Device available
+  Controller -> Controller: Select target ~~Device~~ and its Gateway
+  rnote left Controller: Follow **Deployment Phase**
+else No matching device
+  Controller ->> Etcd: Update ~~Application~~ status\n//Failed - No matching device//
+  KubeApi -->> User: Status: Failed - No available device
+end
+
+== Gateway Phase ==
+
+Controller ->> Gateway: Request deployment\n//DeviceId, Image//
+activate Gateway
+
+alt Gateway reachable
+  Gateway -> Gateway: Pull and validate image
+  alt Image pull successful
+    Gateway ->> MCU: Forward deployment request\n//Bytecode//
+    rnote right MCU: Follow **Provision Phase**
+  else Image pull failed
+    Gateway -->> Controller: Error: Image pull failure
+    Controller ->> Etcd: Update ~~Application~~ status\n//Failed - Image pull failure//
+    KubeApi -->> User: Status: Failed - Image pull failure
+  end
+
+else Gateway unreachable
+  Controller ->> Etcd: Update ~~Application~~ status\n//Failed - Gateway unreachable//
+  KubeApi -->> User: Status: Failed - Gateway unreachable
+end
+
+== Provision Phase ==
+
+MCU -> MCU: Deploy bytecode
+activate MCU
+
+alt MCU provision successful
+  MCU -->> Gateway: Deployment successful
+  Gateway -->> Controller: Confirm deployment success
+  Controller ->> Etcd: Update ~~Application~~\n//Running//
+  KubeApi --> User: Status: Running
+else MCU provision failed
+  MCU -->> Gateway: Error: MCU provision failed
+  Gateway -->> Controller: Deployment failed: MCU error
+  Controller ->> Etcd: Update ~~Application~~ status\n//Failed - MCU error//
+  KubeApi --> User: Status: Failed - MCU error
+end
+
+deactivate MCU
+deactivate Gateway
+deactivate Controller
+@enduml

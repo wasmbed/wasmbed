@@ -50,3 +50,7 @@ cargo run -p <tool-package-name> -- <args>
 
 - \<tool-package-name\>: The name of the tool's package (e.g., wasmbed-protocol-tool).
 - \<args\>: Any arguments that the tool accepts (e.g. --hex).
+
+## Generating Diagrams from PlantUML Files
+
+Please refer to [resources/diagrams/README.md](resources/diagrams/README.md).

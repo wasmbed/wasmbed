@@ -88,9 +88,29 @@
     packages =
       lib.attrsets.genAttrs
         crates
-        (name: buildCrate name);
+        (name: buildCrate name)
+      //
+      {
+        wasmbed-diagrams = pkgs.stdenvNoCC.mkDerivation {
+          name = "wasmbed-diagrams";
+          src = ./resources/diagrams;
+          nativeBuildInputs = with pkgs; [ gnumake plantuml ];
+          buildPhase = ''
+            make svg
+          '';
+          installPhase = ''
+            mkdir -p $out
+            cp *.svg $out
+          '';
+        };
+      };
 
-    devShells.default = craneLib.devShell {};
+    devShells.default = craneLib.devShell {
+      packages = with pkgs; [
+        gnumake
+        plantuml
+      ];
+    };
 
     dockerImages.wasmbed-operator = pkgs.dockerTools.buildLayeredImage {
       name = "wasmbed-operator";

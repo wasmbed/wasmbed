@@ -1,0 +1,52 @@
+@startuml
+title Device Enrollment Workflow
+
+skinparam wrapMessageWidth 200
+
+actor       "Administrator" as Admin
+boundary    "Kubernetes API Server" as KubeApi
+participant "Microcontroller Unit" as MCU
+boundary    "Gateway" as Gateway
+database    "etcd" as Etcd
+
+== Pairing Mode Activation ==
+
+Admin -> KubeApi: Enable pairing mode
+note right of Gateway: Gateway now accepts new device enrollments.
+note right of Gateway: Precise mechanism to be defined yet.
+
+== Device Initialization Phase ==
+
+MCU -> MCU: Generate keypair
+activate MCU
+
+== Enrollment Phase ==
+
+MCU ->> Gateway: Initial connection request with enrollment flag
+activate Gateway
+Gateway -> Etcd: Check if pairing mode is enabled
+
+alt Pairing Mode Active
+    Etcd --> Gateway: Pairing is enabled
+    note right of Gateway: Follow **Registration Phase**
+else Pairing Mode Inactive
+    Etcd --> Gateway: Pairing is disabled
+    Gateway ->> MCU: Enrollment not allowed
+end
+
+== Registration Phase ==
+
+Gateway -> Etcd: Create ~~Device~~\n//Enrolling//
+Gateway --> MCU: Accept enrollment request
+MCU ->> Gateway: Send public key
+Gateway -> Etcd: Update ~~Device~~\nStore public key
+Gateway ->> MCU: Send ~~Device~~ UUID
+MCU -> MCU: Store UUID and keypair in non-volatile memory
+MCU ->> Gateway: Send acknowledge
+Gateway -> Etcd: Update ~~Device~~\n//Enrolled//
+Gateway ->> MCU: Enrollment successful
+MCU -> MCU: Exit enrollment mode
+deactivate MCU
+deactivate Gateway
+
+@enduml

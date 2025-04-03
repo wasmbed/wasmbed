@@ -1,0 +1,38 @@
+@startuml
+title Architecture
+
+package "Kubernetes Cluster" {
+  package "Control Plane Components" {
+    boundary "Kubernetes API Server" as KubeApi
+    database "etcd" as Etcd {
+      component "~~Application~~\n(1 per application)" as Application
+      component "~~Device~~\n(1 per device)"           as Device
+    }
+  }
+
+  node "Worker Node" {
+    package "Operator Deployment" {
+      control "Application Controller\n(1 replica)" as ApplicationController
+      control "Device Controller\n(1 replica)"      as DeviceController
+    }
+
+    package "Gateway Deployment" {
+      boundary "Gateway\n(1..N replicas)" as Gateway
+    }
+  }
+}
+
+cloud "Internet" as Internet
+
+node "Edge Network" {
+  entity "Microcontroller Unit\n(1..M devices)" as MCU
+}
+
+ApplicationController <--> KubeApi
+DeviceController      <--> KubeApi
+Gateway               <--> KubeApi
+KubeApi               <--> Etcd
+
+Gateway  <--> Internet
+Internet <--> MCU
+@enduml

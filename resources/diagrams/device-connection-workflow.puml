@@ -1,0 +1,62 @@
+@startuml
+title Device Connection Workflow
+
+skinparam wrapMessageWidth 200
+
+participant "Microcontroller Unit" as MCU
+boundary    "Gateway" as Gateway
+database    "etcd" as Etcd
+
+== Connection Initiation ==
+
+MCU ->> Gateway: Initiate TLS connection with client authentication
+activate MCU
+activate Gateway
+note right of MCU: Device presents its UUID and public key in TLS handshake.
+
+== Authentication Phase ==
+
+Gateway -> Etcd: Query ~~Device~~ public key for UUID
+
+alt Device and public key found
+    Etcd --> Gateway: Return ~~Device~~ public key
+    note left of Gateway: Follow **Verification Phase**
+else Device or public key not found
+    Gateway ->> MCU: Connection rejected
+end
+
+== Verification Phase ==
+
+Gateway -> Gateway: Verify TLS client authentication using public key
+
+alt Authentication Successful
+    Gateway -> Etcd: Update ~~Device~~ status\n//Connected//
+    Gateway ->> MCU: Connection established successfully
+    note right MCU: Follow **Session Phase**
+else Authentication Failed
+    Gateway ->> MCU: Connection rejected - Authentication failed
+end
+
+== Session Phase ==
+
+loop While connected
+    MCU ->> Gateway: Periodic heartbeat with status
+    Gateway -> Etcd: Update ~~Device~~\nLast heartbeat time
+    ...30 seconds...
+end
+
+== Disconnection ==
+
+alt Graceful Disconnection
+    MCU ->> Gateway: Disconnect notification
+    Gateway -> Etcd: Update ~~Device~~ status\n//Disconnected//
+    Gateway --> MCU: Acknowledge disconnection
+else Connection Lost
+    note right of Gateway: Heartbeat timeout detected
+    Gateway -> Etcd: Update ~~Device~~ status\n//Unreachable//
+end
+
+deactivate Gateway
+deactivate MCU
+
+@enduml

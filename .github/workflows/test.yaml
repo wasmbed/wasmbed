@@ -38,5 +38,7 @@ jobs:
           primary-key: wasmbed-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('flake.lock', 'Cargo.lock') }}
           restore-prefixes-first-match: wasmbed-${{ runner.os }}-${{ runner.arch }}-
           nix: true
+      - name: Build the diagrams
+        run: nix build '.#wasmbed-diagrams'
       - name: Run the tests
         run: nix flake check
