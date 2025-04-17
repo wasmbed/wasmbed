@@ -22,10 +22,13 @@
     mkToolchain = p: p.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
     craneLib = (crane.mkLib pkgs).overrideToolchain mkToolchain;
 
-    src = craneLib.cleanCargoSource ./.;
-    workspaceDeps = craneLib.buildDepsOnly { inherit src; strictDeps = true; };
-
     crates = directories ./crates;
+    src = craneLib.cleanCargoSource ./.;
+    workspaceDeps = craneLib.buildDepsOnly {
+      inherit src;
+      strictDeps = true;
+      doCheck = false;
+    };
 
     # makeAttrs :: list -> attrset
     # Takes a list and a function that produces { name, value } for each element.
@@ -45,10 +48,20 @@
         pname version;
     };
 
-    # buildCrate :: { name: str; doCheck: bool; } -> drv
-    buildCrate = { name, doCheck }: craneLib.buildPackage {
+    # buildCrate :: str -> drv
+    buildCrate = name: craneLib.buildPackage {
       inherit (crateMeta name);
-      inherit src doCheck;
+      inherit src;
+      strictDeps = true;
+      doCheck = false;
+      cargoArtifacts = workspaceDeps;
+      cargoExtraArgs = "-p ${name}";
+    };
+
+    # testCrate :: str -> drv
+    testCrate = name: craneLib.cargoTest {
+      inherit (crateMeta name);
+      inherit src;
       strictDeps = true;
       cargoArtifacts = workspaceDeps;
       cargoExtraArgs = "-p ${name}";
@@ -65,23 +78,17 @@
     checks =
       makeAttrs
         crates
-        (name: {
-          name = "test-${name}";
-          value = buildCrate { inherit name; doCheck = true; };
-        })
+        (name: { name = "test-${name}"; value = testCrate name; })
       //
       makeAttrs
         crates
-        (name: {
-          name = "clippy-${name}";
-          value = clippyCrate name;
-        })
+        (name: { name = "clippy-${name}"; value = clippyCrate name; })
     ;
 
     packages =
       lib.attrsets.genAttrs
         crates
-        (name: buildCrate { inherit name; doCheck = false; });
+        (name: buildCrate name);
 
     devShells.default = craneLib.devShell {};
 
