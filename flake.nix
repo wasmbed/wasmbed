@@ -21,32 +21,51 @@
 
     mkToolchain = p: p.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
     craneLib = (crane.mkLib pkgs).overrideToolchain mkToolchain;
-    src = craneLib.cleanCargoSource ./.;
 
-    listDirectories = path:
+    src = craneLib.cleanCargoSource ./.;
+    workspaceDeps = craneLib.buildDepsOnly { inherit src; strictDeps = true; };
+
+    crates = directories ./crates;
+
+    # makeAttrs :: list -> attrset
+    # Takes a list and a function that produces { name, value } for each element.
+    makeAttrs = list: fn: builtins.listToAttrs (map fn list);
+
+    # directories :: str -> [str]
+    directories = path:
       builtins.attrNames
         (lib.attrsets.filterAttrs
           (_: type: type == "directory")
           (builtins.readDir path));
-    packages = listDirectories ./crates;
 
-    buildPackage = { name, doCheck }: craneLib.buildPackage {
-      inherit src doCheck;
+    # crateMeta :: str -> { pname: str; version: str; }
+    crateMeta = name: {
       inherit
         (craneLib.crateNameFromCargoToml { cargoToml = ./crates/${name}/Cargo.toml; })
-        pname;
+        pname version;
+    };
+
+    # buildCrate :: { name: str; doCheck: bool; } -> drv
+    buildCrate = { name, doCheck }: craneLib.buildPackage {
+      inherit (crateMeta name);
+      inherit src doCheck;
+      strictDeps = true;
+      cargoArtifacts = workspaceDeps;
       cargoExtraArgs = "-p ${name}";
     };
   in {
     checks =
-      lib.attrsets.genAttrs
-        packages
-        (name: buildPackage { inherit name; doCheck = true; });
+      makeAttrs
+        crates
+        (name: {
+          name = "test-${name}";
+          value = buildCrate { inherit name; doCheck = true; };
+        });
 
     packages =
       lib.attrsets.genAttrs
-        packages
-        (name: buildPackage { inherit name; doCheck = false; });
+        crates
+        (name: buildCrate { inherit name; doCheck = false; });
 
     devShells.default = craneLib.devShell {};
 
