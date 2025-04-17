@@ -53,6 +53,14 @@
       cargoArtifacts = workspaceDeps;
       cargoExtraArgs = "-p ${name}";
     };
+
+    # clippyCrate :: str -> drv
+    clippyCrate = name: craneLib.cargoClippy {
+      inherit src;
+      strictDeps = true;
+      cargoArtifacts = workspaceDeps;
+      cargoClippyExtraArgs = "-p ${name} -- --deny warnings";
+    };
   in {
     checks =
       makeAttrs
@@ -60,7 +68,15 @@
         (name: {
           name = "test-${name}";
           value = buildCrate { inherit name; doCheck = true; };
-        });
+        })
+      //
+      makeAttrs
+        crates
+        (name: {
+          name = "clippy-${name}";
+          value = clippyCrate name;
+        })
+    ;
 
     packages =
       lib.attrsets.genAttrs

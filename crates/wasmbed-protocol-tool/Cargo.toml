@@ -6,7 +6,11 @@ edition.workspace = true
 repository.workspace = true
 license.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
+anyhow = "1.0.98"
 hex = "0.4.3"
 
 [dependencies.clap]

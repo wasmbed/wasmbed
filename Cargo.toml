@@ -14,3 +14,44 @@ authors = [ "Tancredi Orlando <tancredi.orlando@gmail.com>" ]
 edition = "2024"
 repository = "https://github.com/turlando/wasmed"
 license = "AGPL-3.0"
+
+[workspace.metadata.crane]
+name = "wasmbed"
+
+[workspace.lints.rust]
+arithmetic_overflow = "deny" # Prevent operations that would cause integer overflow
+
+[workspace.lints.clippy]
+# Arithmetic
+checked_conversions = "deny" # Suggest using checked conversions between numeric types
+cast_possible_truncation = "deny" # Detect when casting might truncate a value
+cast_sign_loss = "deny" # Detect when casting might lose sign information
+cast_possible_wrap = "deny" # Detect when casting might cause value to wrap around
+cast_precision_loss = "deny" # Detect when casting might lose precision
+integer_division = "deny" # Highlight potential bugs from integer division truncation
+arithmetic_side_effects = "deny" # Detect arithmetic operations with potential side effects
+unchecked_duration_subtraction = "deny" # Ensure duration subtraction won't cause underflow
+
+# Unwraps
+unwrap_used = "warn" # Discourage using .unwrap() which can cause panics
+expect_used = "warn" # Discourage using .expect() which can cause panics
+panicking_unwrap = "deny" # Prevent unwrap on values known to cause panics
+option_env_unwrap = "deny" # Prevent unwrapping environment variables which might be absent
+
+# Array indexing
+indexing_slicing = "deny" # Avoid direct array indexing and use safer methods like .get()
+
+# Path handling
+join_absolute_paths = "deny" # Prevent issues when joining paths with absolute paths
+
+# Serialization issues
+serde_api_misuse = "deny" # Prevent incorrect usage of Serde's serialization/deserialization API
+
+# Unbounded input
+uninit_vec = "deny" # Prevent creating uninitialized vectors which is unsafe
+
+# Unsafe code detection
+transmute_int_to_char = "deny" # Prevent unsafe transmutation from integers to characters
+transmute_int_to_float = "deny" # Prevent unsafe transmutation from integers to floats
+transmute_ptr_to_ref = "deny" # Prevent unsafe transmutation from pointers to references
+transmute_undefined_repr = "deny" # Detect transmutes with potentially undefined representations

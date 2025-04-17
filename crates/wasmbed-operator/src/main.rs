@@ -1,7 +1,14 @@
 mod device;
 
-use crate::device::Device;
+use std::sync::Arc;
+
+use anyhow::Result;
 use clap::{Parser, Subcommand};
+use kube::{Api, Client};
+use kube::runtime::Controller;
+use futures::StreamExt;
+
+use crate::device::Device;
 
 #[derive(Parser)]
 #[command(version, disable_help_subcommand = true)]
@@ -28,45 +35,42 @@ enum Resource {
 }
 
 #[tokio::main(flavor = "current_thread")]
-async fn main() {
-    let cli = Cli::parse();
+async fn main() -> Result<()> {
+    use std::io::Write;
 
+    let cli = Cli::parse();
     match cli.command {
-        Command::GenerateCrd(resource) => generate_crd(resource),
-        Command::RunController => run_controller().await,
+        Command::GenerateCrd(resource) =>
+            std::io::stdout().write_all(
+                &generate_crd(resource)?.into_bytes()
+            )?,
+        Command::RunController => {
+            let client = Client::try_default().await?;
+            let device_api: Api<Device> = Api::all(client.clone());
+            run_controller(device_api).await;
+        }
     };
+
+    Ok(())
 }
 
-fn generate_crd(resource: Resource) {
-    use std::io::{stdout, Write};
+fn generate_crd(resource: Resource) -> Result<String, serde_yaml::Error> {
     use kube::CustomResourceExt;
 
     let definition = match resource {
         Resource::Device => Device::crd(),
     };
 
-    let yaml = serde_yaml::to_string(&definition).unwrap();
-    stdout().write_all(&yaml.into_bytes()).unwrap();
+    serde_yaml::to_string(&definition)
 }
 
-async fn run_controller() {
+async fn run_controller(api: Api<Device>) {
     use crate::device::{reconcile_device, on_reconcile_device_error};
 
-    use std::sync::Arc;
+    let context = Arc::new(());
 
-    use futures::StreamExt;
-    use kube::api::Api;
-    use kube::client::Client;
-    use kube::runtime::Controller;
-
-    let client = Client::try_default().await.unwrap();
-    let client_arc = Arc::new(client.clone());
-
-    let devices: Api<Device> = Api::all(client.clone());
-
-    let device_controller = Controller::new(devices, Default::default())
-        .run(reconcile_device, on_reconcile_device_error, Arc::clone(&client_arc))
-        .for_each(|_| futures::future::ready(()));
-
-    device_controller.await;
+    Controller::new(api, Default::default())
+        .run(reconcile_device, on_reconcile_device_error, Arc::clone(&context))
+        .for_each(|_| futures::future::ready(()))
+        .await
 }

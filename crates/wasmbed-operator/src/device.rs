@@ -1,7 +1,6 @@
 use std::sync::Arc;
 use kube::{CustomResource, Error};
 use kube::runtime::controller::Action;
-use kube::client::Client;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use wasmbed_types::DeviceId;
@@ -29,7 +28,7 @@ pub struct DeviceSpec {
 
 pub async fn reconcile_device(
     _device: Arc<Device>,
-    _ctx: Arc<Client>,
+    _ctx: Arc<()>
 ) -> Result<Action, Error> {
     Ok(Action::await_change())
 }
@@ -37,7 +36,7 @@ pub async fn reconcile_device(
 pub fn on_reconcile_device_error(
     device: Arc<Device>,
     error: &kube::Error,
-    _ctx: Arc<Client>
+    _ctx: Arc<()>
 ) -> Action {
     println!(
         "Reconciliation error for device {:?}: {:?}",
