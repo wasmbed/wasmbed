@@ -12,7 +12,7 @@ workspace = true
 [dependencies]
 
 [dependencies.minicbor]
-version = "0.26.3"
+version = "0.26.4"
 default-features = false
 
 [dependencies.uuid]

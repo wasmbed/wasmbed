@@ -14,11 +14,11 @@ anyhow = "1.0.98"
 hex = "0.4.3"
 
 [dependencies.clap]
-version = "4.5.32"
+version = "4.5.36"
 features = [ "derive" ]
 
 [dependencies.minicbor]
-version = "0.26.3"
+version = "0.26.4"
 default-features = false
 
 [dependencies.wasmbed-protocol]
