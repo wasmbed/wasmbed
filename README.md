@@ -8,9 +8,16 @@ dependencies and tool configurations.
 
 ### Prerequisites
 
-- Install the [Nix package manager][nix-download] on your system.
+If you're using [NixOS][nixos], you don't need to install Nix separately, just
+make sure flakes are enabled in your configuration.
 
-[nix-download]: https://nixos.org/download/
+For all other Linux distributions or macOS, we recommend using the
+[Determinate Systems Nix installer][determinate-systems-nix] for a more robust
+and user-friendly experience. See their website for installation instructions
+and platform details.
+
+[nixos]: https://nixos.org/
+[determinate-systems-nix]: https://zero-to-nix.com/
 
 ### Setting Up
 
