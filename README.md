@@ -1,4 +1,4 @@
-# wasmed
+# wasmbed
 
 ## Development Environment
 
@@ -50,6 +50,73 @@ cargo run -p <tool-package-name> -- <args>
 
 - \<tool-package-name\>: The name of the tool's package (e.g., wasmbed-protocol-tool).
 - \<args\>: Any arguments that the tool accepts (e.g. --hex).
+
+## Contributing
+
+To ensure code quality and maintainability, please follow these guidelines when
+contributing to the project.
+
+### Code Requirements
+
+* Editor Configuration: Your editor should respect the settings defined in the
+  `.editorconfig` file to maintain consistent formatting across the codebase.
+* Unit Testing: All code contributions must include appropriate unit tests
+  that verify functionality.
+* Test Verification: Before committing changes, ensure all tests pass by
+  running `cargo test` and `cargo test -- --ignored`.
+* Code Formatting: All code must be formatted using `rustfmt`. Run
+  `cargo fmt` to apply formatting.
+* Code Linting: Code must pass Clippy's linting checks. Run `cargo clippy`
+  to verify.
+
+Alternatively, you can run `nix flake check` to perform all the above checks at
+once.
+
+### Commit Messages
+
+This project follows the [Conventional Commits][conventional-commits]
+format. Each commit message should be structured as follows:
+
+```
+<type>(<optional scope>): <description>
+
+[optional body]
+```
+
+Types include:
+- `feat`: A new feature
+- `fix`: A bug fix
+- `docs`: Documentation changes
+- `style`: Formatting changes
+- `refactor`: Code refactoring without changing functionality
+- `test`: Adding or modifying tests
+- `chore`: Maintenance tasks
+
+Example:
+
+```
+feat(protocol): Add new message type for device registration
+```
+
+Please split complex changes into multiple smaller commits when possible. Each
+commit should be self-contained and leave the codebase in a buildable,
+test-passing state.
+
+[conventional-commits]: https://www.conventionalcommits.org/
+
+### Committing
+
+Direct commits to the `master` branch are not allowed. All contributions must
+be made through branches and submitted via pull requests for review.
+
+When creating a branch, use the following naming convention:
+`<username>/<topic>`. E.g.:
+
+- `alice/fix-connection-timeout`
+- `bob/add-metrics-endpoint`
+
+Once your branch is ready, open a pull request targeting the `master` branch. A
+maintainer will review your changes and provide feedback or approval.
 
 ## Generating Diagrams from PlantUML Files
 
