@@ -120,6 +120,8 @@
     devShells.default = craneLib.devShell {
       packages = with pkgs; [
         gnumake
+        k3d
+        kubectl
         plantuml
       ];
     };
