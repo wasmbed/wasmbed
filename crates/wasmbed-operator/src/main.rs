@@ -40,15 +40,13 @@ async fn main() -> Result<()> {
 
     let cli = Cli::parse();
     match cli.command {
-        Command::GenerateCrd(resource) =>
-            std::io::stdout().write_all(
-                &generate_crd(resource)?.into_bytes()
-            )?,
+        Command::GenerateCrd(resource) => std::io::stdout()
+            .write_all(&generate_crd(resource)?.into_bytes())?,
         Command::RunController => {
             let client = Client::try_default().await?;
             let device_api: Api<Device> = Api::all(client.clone());
             run_controller(device_api).await;
-        }
+        },
     };
 
     Ok(())
@@ -70,7 +68,11 @@ async fn run_controller(api: Api<Device>) {
     let context = Arc::new(());
 
     Controller::new(api, Default::default())
-        .run(reconcile_device, on_reconcile_device_error, Arc::clone(&context))
+        .run(
+            reconcile_device,
+            on_reconcile_device_error,
+            Arc::clone(&context),
+        )
         .for_each(|_| futures::future::ready(()))
         .await
 }

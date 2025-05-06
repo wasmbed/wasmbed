@@ -74,15 +74,27 @@
       cargoArtifacts = workspaceDeps;
       cargoClippyExtraArgs = "-p ${name} -- --deny warnings";
     };
+
+    # fmtCrate :: str -> drv
+    fmtCrate = name: craneLib.cargoFmt {
+      inherit src;
+      structDeps = true;
+      cargoArtifacts = workspaceDeps;
+      cargoFmtExtraArgs = "-p ${name}";
+    };
   in {
     checks =
       makeAttrs
         crates
-        (name: { name = "test-${name}"; value = testCrate name; })
+        (name: { name = "fmt-${name}"; value = fmtCrate name; })
       //
       makeAttrs
         crates
         (name: { name = "clippy-${name}"; value = clippyCrate name; })
+      //
+      makeAttrs
+        crates
+        (name: { name = "test-${name}"; value = testCrate name; })
     ;
 
     packages =

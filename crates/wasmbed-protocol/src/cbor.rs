@@ -1,21 +1,12 @@
 use minicbor::encode::{Encode, Encoder, Error as EError, Write};
 use minicbor::decode::{Decode, Decoder, Error as DError};
 use crate::types::{
-    Envelope,
-    Version,
-    Message,
-    MessageKind,
-    PodId,
-    WasmModule,
-    CreatePodRequest,
-    CreatePodResponse,
-    CreatePodResult,
+    Envelope, Version, Message, MessageKind, PodId, WasmModule,
+    CreatePodRequest, CreatePodResponse, CreatePodResult,
 };
 
-const INVALID_VERSION_ERROR: &str =
-    "Invalid version";
-const INVALID_MESSAGE_KIND_ERROR: &str =
-    "Invalid message kind";
+const INVALID_VERSION_ERROR: &str = "Invalid version";
+const INVALID_MESSAGE_KIND_ERROR: &str = "Invalid message kind";
 const INVALID_UUID_LENGTH_ERROR: &str =
     "Failed to decode PodId: invalid UUID length";
 const INDEFINITE_LENGTH_ARRAY_ERROR: &str =
@@ -31,21 +22,17 @@ impl<Ctx> Encode<Ctx> for Envelope {
     fn encode<W: Write>(
         &self,
         e: &mut Encoder<W>,
-        _ctx: &mut Ctx
+        _ctx: &mut Ctx,
     ) -> Result<(), EError<W::Error>> {
-        e.array(2)?
-            .encode(&self.version)?
-            .encode(&self.body)?;
+        e.array(2)?.encode(&self.version)?.encode(&self.body)?;
         Ok(())
     }
 }
 
 impl<'b, Ctx> Decode<'b, Ctx> for Envelope {
-    fn decode(
-        d: &mut Decoder<'b>,
-        _ctx: &mut Ctx
-    ) -> Result<Self, DError> {
-        let len = d.array()?
+    fn decode(d: &mut Decoder<'b>, _ctx: &mut Ctx) -> Result<Self, DError> {
+        let len = d
+            .array()?
             .ok_or(DError::message(INDEFINITE_LENGTH_ARRAY_ERROR))?;
         if len != 2 {
             return Err(DError::message(INVALID_ARRAY_LENGTH_ERROR));
@@ -64,7 +51,7 @@ impl<Ctx> Encode<Ctx> for Version {
     fn encode<W>(
         &self,
         e: &mut Encoder<W>,
-        _ctx: &mut Ctx
+        _ctx: &mut Ctx,
     ) -> Result<(), EError<W::Error>>
     where
         W: Write,
@@ -75,12 +62,8 @@ impl<Ctx> Encode<Ctx> for Version {
 }
 
 impl<'b, Ctx> Decode<'b, Ctx> for Version {
-    fn decode(
-        d: &mut Decoder<'b>,
-        _ctx: &mut Ctx
-    ) -> Result<Self, DError> {
-        Self::from_u8(d.u8()?)
-            .ok_or(DError::message(INVALID_VERSION_ERROR))
+    fn decode(d: &mut Decoder<'b>, _ctx: &mut Ctx) -> Result<Self, DError> {
+        Self::from_u8(d.u8()?).ok_or(DError::message(INVALID_VERSION_ERROR))
     }
 }
 
@@ -90,10 +73,9 @@ impl<Ctx> Encode<Ctx> for Message {
     fn encode<W: Write>(
         &self,
         e: &mut Encoder<W>,
-        _ctx: &mut Ctx
+        _ctx: &mut Ctx,
     ) -> Result<(), EError<W::Error>> {
-        e.array(2)?
-            .encode(self.kind())?;
+        e.array(2)?.encode(self.kind())?;
         match self {
             Self::CreatePodRequest(v) => e.encode(v)?,
             Self::CreatePodResponse(v) => e.encode(v)?,
@@ -103,19 +85,21 @@ impl<Ctx> Encode<Ctx> for Message {
 }
 
 impl<'b, Ctx> Decode<'b, Ctx> for Message {
-    fn decode(
-        d: &mut Decoder<'b>,
-        _ctx: &mut Ctx
-    ) -> Result<Self, DError> {
-        let len = d.array()?
+    fn decode(d: &mut Decoder<'b>, _ctx: &mut Ctx) -> Result<Self, DError> {
+        let len = d
+            .array()?
             .ok_or(DError::message(INDEFINITE_LENGTH_ARRAY_ERROR))?;
         if len != 2 {
             return Err(DError::message(INVALID_ARRAY_LENGTH_ERROR));
         }
 
         Ok(match d.decode()? {
-            MessageKind::CreatePodRequest  => Self::CreatePodRequest(d.decode()?),
-            MessageKind::CreatePodResponse => Self::CreatePodResponse(d.decode()?),
+            MessageKind::CreatePodRequest => {
+                Self::CreatePodRequest(d.decode()?)
+            },
+            MessageKind::CreatePodResponse => {
+                Self::CreatePodResponse(d.decode()?)
+            },
         })
     }
 }
@@ -126,7 +110,7 @@ impl<Ctx> Encode<Ctx> for MessageKind {
     fn encode<W: Write>(
         &self,
         e: &mut Encoder<W>,
-        _ctx: &mut Ctx
+        _ctx: &mut Ctx,
     ) -> Result<(), EError<W::Error>> {
         e.u8(self.as_u8())?;
         Ok(())
@@ -134,10 +118,7 @@ impl<Ctx> Encode<Ctx> for MessageKind {
 }
 
 impl<'b, Ctx> Decode<'b, Ctx> for MessageKind {
-    fn decode(
-        d: &mut Decoder<'b>,
-        _ctx: &mut Ctx
-    ) -> Result<Self, DError> {
+    fn decode(d: &mut Decoder<'b>, _ctx: &mut Ctx) -> Result<Self, DError> {
         Self::from_u8(d.u8()?)
             .ok_or(DError::message(INVALID_MESSAGE_KIND_ERROR))
     }
@@ -149,7 +130,7 @@ impl<Ctx> Encode<Ctx> for PodId {
     fn encode<W: Write>(
         &self,
         e: &mut Encoder<W>,
-        _ctx: &mut Ctx
+        _ctx: &mut Ctx,
     ) -> Result<(), EError<W::Error>> {
         e.bytes(self.as_bytes())?;
         Ok(())
@@ -157,11 +138,7 @@ impl<Ctx> Encode<Ctx> for PodId {
 }
 
 impl<'b, Ctx> Decode<'b, Ctx> for PodId {
-
-    fn decode(
-        d: &mut Decoder<'b>,
-        _ctx: &mut Ctx
-    ) -> Result<Self, DError> {
+    fn decode(d: &mut Decoder<'b>, _ctx: &mut Ctx) -> Result<Self, DError> {
         Self::from_slice(d.bytes()?)
             .ok_or(DError::message(INVALID_UUID_LENGTH_ERROR))
     }
@@ -173,7 +150,7 @@ impl<Ctx> Encode<Ctx> for WasmModule {
     fn encode<W: Write>(
         &self,
         e: &mut Encoder<W>,
-        _ctx: &mut Ctx
+        _ctx: &mut Ctx,
     ) -> Result<(), EError<W::Error>> {
         e.bytes(self.as_slice())?;
         Ok(())
@@ -181,10 +158,7 @@ impl<Ctx> Encode<Ctx> for WasmModule {
 }
 
 impl<'b, Ctx> Decode<'b, Ctx> for WasmModule {
-    fn decode(
-        d: &mut Decoder<'b>,
-        _ctx: &mut Ctx
-    ) -> Result<Self, DError> {
+    fn decode(d: &mut Decoder<'b>, _ctx: &mut Ctx) -> Result<Self, DError> {
         Ok(Self::from_slice(d.bytes()?))
     }
 }
@@ -205,11 +179,9 @@ impl<Ctx> Encode<Ctx> for CreatePodRequest {
 }
 
 impl<'b, Ctx> Decode<'b, Ctx> for CreatePodRequest {
-    fn decode(
-        d: &mut Decoder<'b>,
-        _ctx: &mut Ctx
-    ) -> Result<Self, DError> {
-        let len = d.array()?
+    fn decode(d: &mut Decoder<'b>, _ctx: &mut Ctx) -> Result<Self, DError> {
+        let len = d
+            .array()?
             .ok_or(DError::message(INDEFINITE_LENGTH_ARRAY_ERROR))?;
         if len != 2 {
             return Err(DError::message(INVALID_ARRAY_LENGTH_ERROR));
@@ -217,7 +189,7 @@ impl<'b, Ctx> Decode<'b, Ctx> for CreatePodRequest {
 
         Ok(Self {
             pod_id: d.decode()?,
-            wasm_module: d.decode()?
+            wasm_module: d.decode()?,
         })
     }
 }
@@ -228,21 +200,17 @@ impl<Ctx> Encode<Ctx> for CreatePodResponse {
     fn encode<W: Write>(
         &self,
         e: &mut Encoder<W>,
-        _ctx: &mut Ctx
+        _ctx: &mut Ctx,
     ) -> Result<(), EError<W::Error>> {
-        e.array(2)?
-            .encode(&self.pod_id)?
-            .encode(&self.result)?;
+        e.array(2)?.encode(&self.pod_id)?.encode(&self.result)?;
         Ok(())
     }
 }
 
 impl<'b, Ctx> Decode<'b, Ctx> for CreatePodResponse {
-    fn decode(
-        d: &mut Decoder<'b>,
-        _ctx: &mut Ctx
-    ) -> Result<Self, DError> {
-        let len = d.array()?
+    fn decode(d: &mut Decoder<'b>, _ctx: &mut Ctx) -> Result<Self, DError> {
+        let len = d
+            .array()?
             .ok_or(DError::message(INDEFINITE_LENGTH_ARRAY_ERROR))?;
         if len != 2 {
             return Err(DError::message(INVALID_ARRAY_LENGTH_ERROR));
@@ -261,7 +229,7 @@ impl<Ctx> Encode<Ctx> for CreatePodResult {
     fn encode<W: Write>(
         &self,
         e: &mut Encoder<W>,
-        _ctx: &mut Ctx
+        _ctx: &mut Ctx,
     ) -> Result<(), EError<W::Error>> {
         e.u8(self.as_u8())?;
         Ok(())
@@ -269,10 +237,7 @@ impl<Ctx> Encode<Ctx> for CreatePodResult {
 }
 
 impl<'b, Ctx> Decode<'b, Ctx> for CreatePodResult {
-    fn decode(
-        d: &mut Decoder<'b>,
-        _ctx: &mut Ctx
-    ) -> Result<Self, DError> {
+    fn decode(d: &mut Decoder<'b>, _ctx: &mut Ctx) -> Result<Self, DError> {
         Self::from_u8(d.u8()?)
             .ok_or(DError::message(INVALID_CREATE_POD_RESULT_TAG_ERROR))
     }
@@ -286,10 +251,11 @@ mod tests {
     use wasmbed_test_utils::minicbor::assert_encode_decode;
 
     const POD_ID: PodId = PodId::from_bytes([
-        0xa1, 0xa2, 0xa3, 0xa4, 0xb1, 0xb2, 0xc1, 0xc2,
-        0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0xd7, 0xd8,
+        0xa1, 0xa2, 0xa3, 0xa4, 0xb1, 0xb2, 0xc1, 0xc2, 0xd1, 0xd2, 0xd3, 0xd4,
+        0xd5, 0xd6, 0xd7, 0xd8,
     ]);
 
+    #[rustfmt::skip]
     const WASM_MODULE_BYTES: [u8; 24] = [
         0x00, 0x61, 0x73, 0x6D,             // Magic Header "\0asm"
         0x01, 0x00, 0x00, 0x00,             // Wasm Version (1)
@@ -310,22 +276,18 @@ mod tests {
 
     #[test]
     fn test_create_pod_request() {
-        assert_encode_decode(
-            &CreatePodRequest {
-                pod_id: POD_ID,
-                wasm_module: WasmModule::from_slice(&WASM_MODULE_BYTES),
-            }
-        );
+        assert_encode_decode(&CreatePodRequest {
+            pod_id: POD_ID,
+            wasm_module: WasmModule::from_slice(&WASM_MODULE_BYTES),
+        });
     }
 
     #[test]
     fn test_successful_create_pod_response() {
-        assert_encode_decode(
-            &CreatePodResponse {
-                pod_id: POD_ID,
-                result: CreatePodResult::Success,
-            }
-        );
+        assert_encode_decode(&CreatePodResponse {
+            pod_id: POD_ID,
+            result: CreatePodResult::Success,
+        });
     }
 
     #[test]
@@ -338,70 +300,58 @@ mod tests {
 
     #[test]
     fn test_create_pod_request_message() {
-        assert_encode_decode(
-            &Message::CreatePodRequest(CreatePodRequest {
-                pod_id: POD_ID,
-                wasm_module: WasmModule::from_slice(&WASM_MODULE_BYTES),
-            })
-        );
+        assert_encode_decode(&Message::CreatePodRequest(CreatePodRequest {
+            pod_id: POD_ID,
+            wasm_module: WasmModule::from_slice(&WASM_MODULE_BYTES),
+        }));
     }
 
     #[test]
     fn test_successful_create_pod_response_message() {
-        assert_encode_decode(
-            &Message::CreatePodResponse(CreatePodResponse {
-                pod_id: POD_ID,
-                result: CreatePodResult::Success,
-            })
-        );
+        assert_encode_decode(&Message::CreatePodResponse(CreatePodResponse {
+            pod_id: POD_ID,
+            result: CreatePodResult::Success,
+        }));
     }
 
     #[test]
     fn test_unsuccessful_create_pod_response_message() {
-        assert_encode_decode(
-            &Message::CreatePodResponse(CreatePodResponse {
-                pod_id: POD_ID,
-                result: CreatePodResult::Failure,
-            })
-        );
+        assert_encode_decode(&Message::CreatePodResponse(CreatePodResponse {
+            pod_id: POD_ID,
+            result: CreatePodResult::Failure,
+        }));
     }
 
     #[test]
     fn test_create_pod_request_message_envelope() {
-        assert_encode_decode(
-            &Envelope {
-                version: Version::V0,
-                body: Message::CreatePodRequest(CreatePodRequest {
-                    pod_id: POD_ID,
-                    wasm_module: WasmModule::from_slice(&WASM_MODULE_BYTES),
-                }),
-            }
-        );
+        assert_encode_decode(&Envelope {
+            version: Version::V0,
+            body: Message::CreatePodRequest(CreatePodRequest {
+                pod_id: POD_ID,
+                wasm_module: WasmModule::from_slice(&WASM_MODULE_BYTES),
+            }),
+        });
     }
 
     #[test]
     fn test_successful_create_pod_response_message_envelope() {
-        assert_encode_decode(
-            &Envelope {
-                version: Version::V0,
-                body: Message::CreatePodResponse(CreatePodResponse {
-                    pod_id: POD_ID,
-                    result: CreatePodResult::Success,
-                }),
-            }
-        );
+        assert_encode_decode(&Envelope {
+            version: Version::V0,
+            body: Message::CreatePodResponse(CreatePodResponse {
+                pod_id: POD_ID,
+                result: CreatePodResult::Success,
+            }),
+        });
     }
 
     #[test]
     fn test_unsuccessful_create_pod_response_message_envelope() {
-        assert_encode_decode(
-            &Envelope {
-                version: Version::V0,
-                body: Message::CreatePodResponse(CreatePodResponse {
-                    pod_id: POD_ID,
-                    result: CreatePodResult::Failure,
-                }),
-            }
-        );
+        assert_encode_decode(&Envelope {
+            version: Version::V0,
+            body: Message::CreatePodResponse(CreatePodResponse {
+                pod_id: POD_ID,
+                result: CreatePodResult::Failure,
+            }),
+        });
     }
 }

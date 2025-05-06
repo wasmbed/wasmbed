@@ -42,7 +42,7 @@ pub enum Message {
 impl Message {
     pub fn kind(&self) -> MessageKind {
         match self {
-            Message::CreatePodRequest(_)  => MessageKind::CreatePodRequest,
+            Message::CreatePodRequest(_) => MessageKind::CreatePodRequest,
             Message::CreatePodResponse(_) => MessageKind::CreatePodResponse,
         }
     }
@@ -67,7 +67,7 @@ impl MessageKind {
 
     pub fn as_u8(&self) -> u8 {
         match self {
-            Self::CreatePodRequest  => 0,
+            Self::CreatePodRequest => 0,
             Self::CreatePodResponse => 1,
         }
     }
@@ -102,7 +102,7 @@ impl WasmModule {
         WasmModule(bytes.to_vec())
     }
 
-    pub fn as_slice(&self) -> &[u8]{
+    pub fn as_slice(&self) -> &[u8] {
         self.0.as_slice()
     }
 }
