@@ -1,0 +1,21 @@
+[package]
+name = "wasmbed-gateway"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+ctrlc = "3.4.5"
+rustls = { version = "0.23.25", default-features = true, features = ["std"] }
+rcgen = { version = "0.13", features = ["pem", "aws_lc_rs"], default-features = false }
+wasmbed-protocol = {path = "../wasmbed-protocol"}
+
+[dependencies.minicbor]
+version = "0.26.4"
+default-features = false
+
+
+[lints]
+workspace = true
