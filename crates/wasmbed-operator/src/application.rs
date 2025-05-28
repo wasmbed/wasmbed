@@ -5,6 +5,19 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use wasmbed_types::DeviceId;
 
+#[derive(Deserialize, Serialize, Clone, Debug, JsonSchema, Eq, PartialEq)]
+enum ApplicationStatus {
+    Ready,
+    Pending,
+    Error(String),
+}
+
+impl Default for ApplicationStatus {
+    fn default() -> Self {
+        ApplicationStatus::Pending
+    }
+}
+
 #[derive(
     Clone,
     Debug,
@@ -18,24 +31,25 @@ use wasmbed_types::DeviceId;
 #[kube(
     group = "wasmbed.github.io",
     version = "v1",
-    kind = "Device",
+    kind = "Application",
     namespaced
 )]
 #[serde(rename_all = "camelCase")]
-pub struct DeviceSpec {
+pub struct ApplicationSpec {
     id: DeviceId,
-    gateway: String,
+    device_id: DeviceId,
+    status: ApplicationStatus,
 }
 
 pub async fn reconcile_device(
-    _device: Arc<Device>,
+    _device: Arc<Application>,
     _ctx: Arc<()>,
 ) -> Result<Action, Error> {
     Ok(Action::await_change())
 }
 
 pub fn on_reconcile_device_error(
-    device: Arc<Device>,
+    device: Arc<Application>,
     error: &kube::Error,
     _ctx: Arc<()>,
 ) -> Action {

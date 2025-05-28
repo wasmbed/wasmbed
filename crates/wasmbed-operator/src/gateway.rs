@@ -3,7 +3,6 @@ use kube::{CustomResource, Error};
 use kube::runtime::controller::Action;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use wasmbed_types::DeviceId;
 
 #[derive(
     Clone,
@@ -18,24 +17,24 @@ use wasmbed_types::DeviceId;
 #[kube(
     group = "wasmbed.github.io",
     version = "v1",
-    kind = "Device",
+    kind = "Gateway",
     namespaced
 )]
 #[serde(rename_all = "camelCase")]
-pub struct DeviceSpec {
-    id: DeviceId,
+pub struct GatewaySpec {
     gateway: String,
+    pairing: bool,
 }
 
 pub async fn reconcile_device(
-    _device: Arc<Device>,
+    _device: Arc<Gateway>,
     _ctx: Arc<()>,
 ) -> Result<Action, Error> {
     Ok(Action::await_change())
 }
 
 pub fn on_reconcile_device_error(
-    device: Arc<Device>,
+    device: Arc<Gateway>,
     error: &kube::Error,
     _ctx: Arc<()>,
 ) -> Action {
