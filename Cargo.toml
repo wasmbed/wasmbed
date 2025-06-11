@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+    "crates/wasmbed-cert",
     "crates/wasmbed-operator",
     "crates/wasmbed-protocol",
     "crates/wasmbed-protocol-tool",
