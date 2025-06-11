@@ -4,6 +4,7 @@ use uuid::Uuid;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct DeviceId(Uuid);
 
 impl DeviceId {

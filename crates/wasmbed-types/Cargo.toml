@@ -12,11 +12,11 @@ workspace = true
 [dependencies]
 
 [dependencies.minicbor]
-version = "0.26.4"
+version = "1.0.0"
 default-features = false
 
 [dependencies.uuid]
-version = "1.16.0"
+version = "1.17.0"
 default-features = false
 features = [ "v4" ]
 
@@ -27,6 +27,7 @@ schemars = [ "dep:schemars", "dep:serde_json" ]
 [dependencies.schemars]
 version = "0.8.22"
 optional = true
+features = [ "uuid1" ]
 
 [dependencies.serde]
 version = "1.0.219"
