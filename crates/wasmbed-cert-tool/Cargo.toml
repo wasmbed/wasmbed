@@ -1,0 +1,20 @@
+[package]
+name = "wasmbed-cert-tool"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow = "1.0.98"
+
+[dependencies.clap]
+version = "4.5.40"
+features = [ "derive" ]
+
+[dependencies.wasmbed-cert]
+path = "../wasmbed-cert"
+
+[lints]
+workspace = true

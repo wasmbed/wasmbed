@@ -4,10 +4,12 @@ extern crate alloc;
 
 use alloc::{vec, vec::Vec};
 use rcgen::{
-    BasicConstraints, Certificate, CertificateParams, DistinguishedName, Error,
+    BasicConstraints, Certificate, CertificateParams, Error,
     ExtendedKeyUsagePurpose, IsCa, KeyPair, KeyUsagePurpose, PKCS_ED25519,
 };
 use rustls_pki_types::{CertificateDer, PrivateKeyDer};
+
+pub use rcgen::{DistinguishedName, DnType};
 
 /// Core cryptographic credential containing a key pair and certificate.
 struct Credential {

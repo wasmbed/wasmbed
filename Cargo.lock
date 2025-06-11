@@ -2204,6 +2204,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "wasmbed-cert-tool"
+version = "0.0.1"
+dependencies = [
+ "anyhow",
+ "clap",
+ "wasmbed-cert",
+]
+
+[[package]]
 name = "wasmbed-operator"
 version = "0.0.1"
 dependencies = [
