@@ -126,12 +126,11 @@
       ];
     };
 
-    dockerImages.wasmbed-operator = pkgs.dockerTools.buildLayeredImage {
-      name = "wasmbed-operator";
+    dockerImages.wasmbed-controller = pkgs.dockerTools.buildLayeredImage {
+      name = "wasmbed-controller";
       config = {
         Cmd = [
-          "${self.packages.${system}.wasmbed-operator}/bin/wasmbed-operator"
-          "controller"
+          "${self.packages.${system}.wasmbed-k8s-controller}/bin/wasmbed-k8s-controller"
         ];
       };
     };
