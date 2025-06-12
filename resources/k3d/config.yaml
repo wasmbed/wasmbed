@@ -1,0 +1,16 @@
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+
+metadata:
+  name: wasmbed
+
+servers: 1
+agents: 1
+
+options:
+  k3d:
+    wait: true
+    disableLoadbalancer: true
+  kubeconfig:
+    updateDefaultKubeconfig: false
+    switchCurrentContext: false

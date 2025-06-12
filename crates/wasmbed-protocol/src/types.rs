@@ -6,9 +6,6 @@ use uuid::Uuid;
 #[derive(Clone, Debug, PartialEq)]
 pub struct Envelope {
     pub version: Version,
-    // body become type
-    // inside type an enum Message Client or Server
-    // this enum will be of type CreatePod... , same for the Server
     pub body: Message,
 }
 
@@ -38,107 +35,15 @@ impl Version {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Message {
-    ClientMessage(ClientMessage),
-    ServerMessage(ServerMessage),
+    CreatePodRequest(CreatePodRequest),
+    CreatePodResponse(CreatePodResponse),
 }
 
 impl Message {
     pub fn kind(&self) -> MessageKind {
         match self {
-            Message::ClientMessage(_) => MessageKind::ClientMessage,
-            Message::ServerMessage(_) => MessageKind::ServerMessage,
-        }
-    }
-}
-
-// Client Message -----------------------------------------------------------------
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum ClientMessage {
-    CreatePodResponse(CreatePodResponse),
-    DeletePodResponse(DeletePodResponse),
-    Heartbeat(Heartbeat),
-}
-
-impl ClientMessage {
-    pub fn kind(&self) -> ClientMessageKind {
-        match self {
-            ClientMessage::CreatePodResponse(_) => {
-                ClientMessageKind::CreatePodResponse
-            },
-            ClientMessage::DeletePodResponse(_) => {
-                ClientMessageKind::DeletePodResponse
-            },
-            ClientMessage::Heartbeat(_) => ClientMessageKind::Heartbeat,
-        }
-    }
-}
-
-// Heartbeat -----------------------------------------------------------------
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum Heartbeat {
-    Heartbeat,
-}
-
-impl Heartbeat {
-    pub fn from_u8(value: u8) -> Option<Self> {
-        match value {
-            0 => Some(Self::Heartbeat),
-            _ => None,
-        }
-    }
-
-    pub fn as_u8(&self) -> u8 {
-        match self {
-            Self::Heartbeat => 0,
-        }
-    }
-}
-
-// Server Messsage -----------------------------------------------------------------
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum ServerMessage {
-    CreatePodRequest(CreatePodRequest),
-    DeletePodRequest(DeletePodRequest),
-    HeartbeatAcknowledge(HeartbeatAcknowledge),
-}
-
-impl ServerMessage {
-    pub fn kind(&self) -> ServerMessageKind {
-        match self {
-            ServerMessage::CreatePodRequest(_) => {
-                ServerMessageKind::CreatePodRequest
-            },
-            ServerMessage::DeletePodRequest(_) => {
-                ServerMessageKind::DeletePodRequest
-            },
-            ServerMessage::HeartbeatAcknowledge(_) => {
-                ServerMessageKind::HeartbeatAcknowledge
-            },
-        }
-    }
-}
-
-// HeartbeatAcknowledge -----------------------------------------------------------------
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum HeartbeatAcknowledge {
-    HeartbeatAcknowledge,
-}
-
-impl HeartbeatAcknowledge {
-    pub fn from_u8(value: u8) -> Option<Self> {
-        match value {
-            0 => Some(Self::HeartbeatAcknowledge),
-            _ => None,
-        }
-    }
-
-    pub fn as_u8(&self) -> u8 {
-        match self {
-            Self::HeartbeatAcknowledge => 0,
+            Message::CreatePodRequest(_) => MessageKind::CreatePodRequest,
+            Message::CreatePodResponse(_) => MessageKind::CreatePodResponse,
         }
     }
 }
@@ -147,68 +52,15 @@ impl HeartbeatAcknowledge {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum MessageKind {
-    ClientMessage,
-    ServerMessage,
+    CreatePodRequest,
+    CreatePodResponse,
 }
 
 impl MessageKind {
     pub fn from_u8(value: u8) -> Option<Self> {
         match value {
-            0 => Some(Self::ClientMessage),
-            1 => Some(Self::ServerMessage),
-            _ => None,
-        }
-    }
-
-    pub fn as_u8(&self) -> u8 {
-        match self {
-            Self::ClientMessage => 0,
-            Self::ServerMessage => 1,
-        }
-    }
-}
-
-// ClientMessageKind -----------------------------------------------------------------
-
-pub enum ClientMessageKind {
-    CreatePodResponse,
-    DeletePodResponse,
-    Heartbeat,
-}
-
-impl ClientMessageKind {
-    pub fn from_u8(value: u8) -> Option<Self> {
-        match value {
-            0 => Some(Self::CreatePodResponse),
-            1 => Some(Self::DeletePodResponse),
-            2 => Some(Self::Heartbeat),
-            _ => None,
-        }
-    }
-
-    pub fn as_u8(&self) -> u8 {
-        match self {
-            Self::CreatePodResponse => 0,
-            Self::DeletePodResponse => 1,
-            Self::Heartbeat => 2,
-        }
-    }
-}
-
-// ServerMessageKind -----------------------------------------------------------------
-
-pub enum ServerMessageKind {
-    CreatePodRequest,
-    DeletePodRequest,
-    HeartbeatAcknowledge,
-}
-
-impl ServerMessageKind {
-    pub fn from_u8(value: u8) -> Option<Self> {
-        match value {
             0 => Some(Self::CreatePodRequest),
-            1 => Some(Self::DeletePodRequest),
-            2 => Some(Self::HeartbeatAcknowledge),
+            1 => Some(Self::CreatePodResponse),
             _ => None,
         }
     }
@@ -216,8 +68,7 @@ impl ServerMessageKind {
     pub fn as_u8(&self) -> u8 {
         match self {
             Self::CreatePodRequest => 0,
-            Self::DeletePodRequest => 1,
-            Self::HeartbeatAcknowledge => 2,
+            Self::CreatePodResponse => 1,
         }
     }
 }
@@ -264,38 +115,23 @@ pub struct CreatePodRequest {
     pub wasm_module: WasmModule,
 }
 
-// Message: DeletePodRequest ---------------------------------------------------
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct DeletePodRequest {
-    pub pod_id: PodId,
-}
-
 // Message: CreatePodResponse --------------------------------------------------
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CreatePodResponse {
     pub pod_id: PodId,
-    pub result: ClientPodResult,
+    pub result: CreatePodResult,
 }
 
-// Message: DeletePodResponse ---------------------------------------------------
+// CreatePodResult -------------------------------------------------------------
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct DeletePodResponse {
-    pub pod_id: PodId,
-    pub result: ClientPodResult,
-}
-
-// ClientCreatePodResult -------------------------------------------------------------
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum ClientPodResult {
+pub enum CreatePodResult {
     Success,
     Failure,
 }
 
-impl ClientPodResult {
+impl CreatePodResult {
     pub fn from_u8(value: u8) -> Option<Self> {
         match value {
             0 => Some(Self::Success),
@@ -312,4 +148,4 @@ impl ClientPodResult {
     }
 }
 
-// -------------------------------------------------------------
+// -----------------------------------------------------------------------------

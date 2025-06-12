@@ -15,6 +15,6 @@ minicbor = [ "dep:minicbor" ]
 [dependencies]
 
 [dependencies.minicbor]
-version = "0.26.4"
+version = "1.0.0"
 features = [ "alloc" ]
 optional = true

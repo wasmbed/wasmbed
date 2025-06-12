@@ -1,10 +1,8 @@
 use minicbor::encode::{Encode, Encoder, Error as EError, Write};
 use minicbor::decode::{Decode, Decoder, Error as DError};
 use crate::types::{
-    ClientPodResult, ClientMessage, ClientMessageKind, CreatePodRequest,
-    CreatePodResponse, DeletePodRequest, DeletePodResponse, Envelope,
-    Heartbeat, HeartbeatAcknowledge, Message, MessageKind, PodId,
-    ServerMessage, ServerMessageKind, Version, WasmModule,
+    Envelope, Version, Message, MessageKind, PodId, WasmModule,
+    CreatePodRequest, CreatePodResponse, CreatePodResult,
 };
 
 const INVALID_VERSION_ERROR: &str = "Invalid version";
@@ -17,11 +15,6 @@ const INVALID_ARRAY_LENGTH_ERROR: &str =
     "Failed to decode array: incorrect length";
 const INVALID_CREATE_POD_RESULT_TAG_ERROR: &str =
     "Failed to decode CreatePodResult: unexpected tag";
-const INVALID_HEARTBEAT_ERROR: &str = "Invalid heartbeat";
-const INVALID_HEARTBEAT_ACKNOWLEDGE_ERROR: &str =
-    "Invalid heartbeat acknowledge";
-const INVALID_CLIENT_MESSAGE_KIND_ERROR: &str = "Invalid client message kind";
-const INVALID_SERVER_MESSAGE_KIND_ERROR: &str = "Invalid server message kind";
 
 // Envelope --------------------------------------------------------------------
 
@@ -84,8 +77,8 @@ impl<Ctx> Encode<Ctx> for Message {
     ) -> Result<(), EError<W::Error>> {
         e.array(2)?.encode(self.kind())?;
         match self {
-            Self::ClientMessage(v) => e.encode(v)?,
-            Self::ServerMessage(v) => e.encode(v)?,
+            Self::CreatePodRequest(v) => e.encode(v)?,
+            Self::CreatePodResponse(v) => e.encode(v)?,
         };
         Ok(())
     }
@@ -101,8 +94,12 @@ impl<'b, Ctx> Decode<'b, Ctx> for Message {
         }
 
         Ok(match d.decode()? {
-            MessageKind::ClientMessage => Self::ClientMessage(d.decode()?),
-            MessageKind::ServerMessage => Self::ServerMessage(d.decode()?),
+            MessageKind::CreatePodRequest => {
+                Self::CreatePodRequest(d.decode()?)
+            },
+            MessageKind::CreatePodResponse => {
+                Self::CreatePodResponse(d.decode()?)
+            },
         })
     }
 }
@@ -124,126 +121,6 @@ impl<'b, Ctx> Decode<'b, Ctx> for MessageKind {
     fn decode(d: &mut Decoder<'b>, _ctx: &mut Ctx) -> Result<Self, DError> {
         Self::from_u8(d.u8()?)
             .ok_or(DError::message(INVALID_MESSAGE_KIND_ERROR))
-    }
-}
-
-// ClientMessage -----------------------------------------------------------------
-
-impl<Ctx> Encode<Ctx> for ClientMessage {
-    fn encode<W: Write>(
-        &self,
-        e: &mut Encoder<W>,
-        _ctx: &mut Ctx,
-    ) -> Result<(), EError<W::Error>> {
-        e.array(3)?.encode(self.kind())?;
-        match self {
-            Self::CreatePodResponse(v) => e.encode(v)?,
-            Self::DeletePodResponse(v) => e.encode(v)?,
-            Self::Heartbeat(v) => e.encode(v.as_u8())?,
-        };
-        Ok(())
-    }
-}
-
-impl<'b, Ctx> Decode<'b, Ctx> for ClientMessage {
-    fn decode(d: &mut Decoder<'b>, _ctx: &mut Ctx) -> Result<Self, DError> {
-        let len = d
-            .array()?
-            .ok_or(DError::message(INDEFINITE_LENGTH_ARRAY_ERROR))?;
-        if len != 3 {
-            return Err(DError::message(INVALID_ARRAY_LENGTH_ERROR));
-        }
-
-        Ok(match d.decode()? {
-            ClientMessageKind::CreatePodResponse => {
-                Self::CreatePodResponse(d.decode()?)
-            },
-            ClientMessageKind::DeletePodResponse => {
-                Self::DeletePodResponse(d.decode()?)
-            },
-            ClientMessageKind::Heartbeat => Self::Heartbeat(d.decode()?),
-        })
-    }
-}
-
-// ClientMessageKind -----------------------------------------------------------------
-
-impl<Ctx> Encode<Ctx> for ClientMessageKind {
-    fn encode<W: Write>(
-        &self,
-        e: &mut Encoder<W>,
-        _ctx: &mut Ctx,
-    ) -> Result<(), EError<W::Error>> {
-        e.u8(self.as_u8())?;
-        Ok(())
-    }
-}
-
-impl<'b, Ctx> Decode<'b, Ctx> for ClientMessageKind {
-    fn decode(d: &mut Decoder<'b>, _ctx: &mut Ctx) -> Result<Self, DError> {
-        Self::from_u8(d.u8()?)
-            .ok_or(DError::message(INVALID_CLIENT_MESSAGE_KIND_ERROR))
-    }
-}
-
-// ServerMessage -----------------------------------------------------------------
-
-impl<Ctx> Encode<Ctx> for ServerMessage {
-    fn encode<W: Write>(
-        &self,
-        e: &mut Encoder<W>,
-        _ctx: &mut Ctx,
-    ) -> Result<(), EError<W::Error>> {
-        e.array(3)?.encode(self.kind())?;
-        match self {
-            Self::CreatePodRequest(v) => e.encode(v)?,
-            Self::DeletePodRequest(v) => e.encode(v)?,
-            Self::HeartbeatAcknowledge(v) => e.encode(v.as_u8())?,
-        };
-        Ok(())
-    }
-}
-
-impl<'b, Ctx> Decode<'b, Ctx> for ServerMessage {
-    fn decode(d: &mut Decoder<'b>, _ctx: &mut Ctx) -> Result<Self, DError> {
-        let len = d
-            .array()?
-            .ok_or(DError::message(INDEFINITE_LENGTH_ARRAY_ERROR))?;
-        if len != 3 {
-            return Err(DError::message(INVALID_ARRAY_LENGTH_ERROR));
-        }
-
-        Ok(match d.decode()? {
-            ServerMessageKind::CreatePodRequest => {
-                Self::CreatePodRequest(d.decode()?)
-            },
-            ServerMessageKind::DeletePodRequest => {
-                Self::DeletePodRequest(d.decode()?)
-            },
-            ServerMessageKind::HeartbeatAcknowledge => {
-                Self::HeartbeatAcknowledge(d.decode()?)
-            },
-        })
-    }
-}
-
-// ServerMessageKind -----------------------------------------------------------------
-
-impl<Ctx> Encode<Ctx> for ServerMessageKind {
-    fn encode<W: Write>(
-        &self,
-        e: &mut Encoder<W>,
-        _ctx: &mut Ctx,
-    ) -> Result<(), EError<W::Error>> {
-        e.u8(self.as_u8())?;
-        Ok(())
-    }
-}
-
-impl<'b, Ctx> Decode<'b, Ctx> for ServerMessageKind {
-    fn decode(d: &mut Decoder<'b>, _ctx: &mut Ctx) -> Result<Self, DError> {
-        Self::from_u8(d.u8()?)
-            .ok_or(DError::message(INVALID_SERVER_MESSAGE_KIND_ERROR))
     }
 }
 
@@ -286,50 +163,6 @@ impl<'b, Ctx> Decode<'b, Ctx> for WasmModule {
     }
 }
 
-// Heartbeat ---------------------------------------------------------------------
-
-impl<Ctx> Encode<Ctx> for Heartbeat {
-    fn encode<W>(
-        &self,
-        e: &mut Encoder<W>,
-        _ctx: &mut Ctx,
-    ) -> Result<(), EError<W::Error>>
-    where
-        W: Write,
-    {
-        e.u8(self.as_u8())?;
-        Ok(())
-    }
-}
-
-impl<'b, Ctx> Decode<'b, Ctx> for Heartbeat {
-    fn decode(d: &mut Decoder<'b>, _ctx: &mut Ctx) -> Result<Self, DError> {
-        Self::from_u8(d.u8()?).ok_or(DError::message(INVALID_HEARTBEAT_ERROR))
-    }
-}
-
-// HeartbeatAcknowledge ---------------------------------------------------------------------
-
-impl<Ctx> Encode<Ctx> for HeartbeatAcknowledge {
-    fn encode<W>(
-        &self,
-        e: &mut Encoder<W>,
-        _ctx: &mut Ctx,
-    ) -> Result<(), EError<W::Error>>
-    where
-        W: Write,
-    {
-        e.u8(self.as_u8())?;
-        Ok(())
-    }
-}
-
-impl<'b, Ctx> Decode<'b, Ctx> for HeartbeatAcknowledge {
-    fn decode(d: &mut Decoder<'b>, _ctx: &mut Ctx) -> Result<Self, DError> {
-        Self::from_u8(d.u8()?)
-            .ok_or(DError::message(INVALID_HEARTBEAT_ACKNOWLEDGE_ERROR))
-    }
-}
 // Message: CreatePodRequest ---------------------------------------------------
 
 impl<Ctx> Encode<Ctx> for CreatePodRequest {
@@ -357,34 +190,6 @@ impl<'b, Ctx> Decode<'b, Ctx> for CreatePodRequest {
         Ok(Self {
             pod_id: d.decode()?,
             wasm_module: d.decode()?,
-        })
-    }
-}
-
-// Message: DeletePodRequest ---------------------------------------------------
-
-impl<Ctx> Encode<Ctx> for DeletePodRequest {
-    fn encode<W: Write>(
-        &self,
-        e: &mut Encoder<W>,
-        _ctx: &mut Ctx,
-    ) -> Result<(), EError<W::Error>> {
-        e.array(1)?.encode(&self.pod_id)?;
-        Ok(())
-    }
-}
-
-impl<'b, Ctx> Decode<'b, Ctx> for DeletePodRequest {
-    fn decode(d: &mut Decoder<'b>, _ctx: &mut Ctx) -> Result<Self, DError> {
-        let len = d
-            .array()?
-            .ok_or(DError::message(INDEFINITE_LENGTH_ARRAY_ERROR))?;
-        if len != 1 {
-            return Err(DError::message(INVALID_ARRAY_LENGTH_ERROR));
-        }
-
-        Ok(Self {
-            pod_id: d.decode()?,
         })
     }
 }
@@ -418,38 +223,9 @@ impl<'b, Ctx> Decode<'b, Ctx> for CreatePodResponse {
     }
 }
 
-// Message: DeletePodRequest ---------------------------------------------------
-
-impl<Ctx> Encode<Ctx> for DeletePodResponse {
-    fn encode<W: Write>(
-        &self,
-        e: &mut Encoder<W>,
-        _ctx: &mut Ctx,
-    ) -> Result<(), EError<W::Error>> {
-        e.array(2)?.encode(&self.pod_id)?.encode(&self.result)?;
-        Ok(())
-    }
-}
-
-impl<'b, Ctx> Decode<'b, Ctx> for DeletePodResponse {
-    fn decode(d: &mut Decoder<'b>, _ctx: &mut Ctx) -> Result<Self, DError> {
-        let len = d
-            .array()?
-            .ok_or(DError::message(INDEFINITE_LENGTH_ARRAY_ERROR))?;
-        if len != 2 {
-            return Err(DError::message(INVALID_ARRAY_LENGTH_ERROR));
-        }
-
-        Ok(Self {
-            pod_id: d.decode()?,
-            result: d.decode()?,
-        })
-    }
-}
-
 // CreatePodResult -------------------------------------------------------------
 
-impl<Ctx> Encode<Ctx> for ClientPodResult {
+impl<Ctx> Encode<Ctx> for CreatePodResult {
     fn encode<W: Write>(
         &self,
         e: &mut Encoder<W>,
@@ -460,7 +236,7 @@ impl<Ctx> Encode<Ctx> for ClientPodResult {
     }
 }
 
-impl<'b, Ctx> Decode<'b, Ctx> for ClientPodResult {
+impl<'b, Ctx> Decode<'b, Ctx> for CreatePodResult {
     fn decode(d: &mut Decoder<'b>, _ctx: &mut Ctx) -> Result<Self, DError> {
         Self::from_u8(d.u8()?)
             .ok_or(DError::message(INVALID_CREATE_POD_RESULT_TAG_ERROR))
@@ -507,22 +283,10 @@ mod tests {
     }
 
     #[test]
-    fn test_heartbeat() {
-        assert_encode_decode(&ClientMessage::Heartbeat(Heartbeat::Heartbeat));
-    }
-
-    #[test]
-    fn test_heartbeat_ack() {
-        assert_encode_decode(&ServerMessage::HeartbeatAcknowledge(
-            HeartbeatAcknowledge::HeartbeatAcknowledge,
-        ));
-    }
-
-    #[test]
     fn test_successful_create_pod_response() {
         assert_encode_decode(&CreatePodResponse {
             pod_id: POD_ID,
-            result: ClientPodResult::Success,
+            result: CreatePodResult::Success,
         });
     }
 
@@ -530,80 +294,42 @@ mod tests {
     fn test_unsuccessful_create_pod_response() {
         assert_encode_decode(&CreatePodResponse {
             pod_id: POD_ID,
-            result: ClientPodResult::Failure,
+            result: CreatePodResult::Failure,
         });
     }
 
     #[test]
     fn test_create_pod_request_message() {
-        assert_encode_decode(&ServerMessage::CreatePodRequest(
-            CreatePodRequest {
-                pod_id: POD_ID,
-                wasm_module: WasmModule::from_slice(&WASM_MODULE_BYTES),
-            },
-        ));
+        assert_encode_decode(&Message::CreatePodRequest(CreatePodRequest {
+            pod_id: POD_ID,
+            wasm_module: WasmModule::from_slice(&WASM_MODULE_BYTES),
+        }));
     }
 
     #[test]
     fn test_successful_create_pod_response_message() {
-        assert_encode_decode(&ClientMessage::CreatePodResponse(
-            CreatePodResponse {
-                pod_id: POD_ID,
-                result: ClientPodResult::Success,
-            },
-        ));
+        assert_encode_decode(&Message::CreatePodResponse(CreatePodResponse {
+            pod_id: POD_ID,
+            result: CreatePodResult::Success,
+        }));
     }
 
     #[test]
     fn test_unsuccessful_create_pod_response_message() {
-        assert_encode_decode(&ClientMessage::CreatePodResponse(
-            CreatePodResponse {
-                pod_id: POD_ID,
-                result: ClientPodResult::Success,
-            },
-        ));
-    }
-
-    #[test]
-    fn test_heartbeat_message_envelope() {
-        assert_encode_decode(&Envelope {
-            version: Version::V0,
-            body: Message::ClientMessage(ClientMessage::Heartbeat(
-                Heartbeat::Heartbeat,
-            )),
-        });
-    }
-
-    #[test]
-    fn test_heartbeat_ack_message_envelope() {
-        assert_encode_decode(&Envelope {
-            version: Version::V0,
-            body: Message::ServerMessage(ServerMessage::HeartbeatAcknowledge(
-                HeartbeatAcknowledge::HeartbeatAcknowledge,
-            )),
-        });
+        assert_encode_decode(&Message::CreatePodResponse(CreatePodResponse {
+            pod_id: POD_ID,
+            result: CreatePodResult::Failure,
+        }));
     }
 
     #[test]
     fn test_create_pod_request_message_envelope() {
         assert_encode_decode(&Envelope {
             version: Version::V0,
-            body: Message::ServerMessage(ServerMessage::CreatePodRequest(
-                CreatePodRequest {
-                    pod_id: POD_ID,
-                    wasm_module: WasmModule::from_slice(&WASM_MODULE_BYTES),
-                },
-            )),
-        });
-    }
-
-    #[test]
-    fn test_delete_pod_request_message_envelope() {
-        assert_encode_decode(&Envelope {
-            version: Version::V0,
-            body: Message::ServerMessage(ServerMessage::DeletePodRequest(
-                DeletePodRequest { pod_id: POD_ID },
-            )),
+            body: Message::CreatePodRequest(CreatePodRequest {
+                pod_id: POD_ID,
+                wasm_module: WasmModule::from_slice(&WASM_MODULE_BYTES),
+            }),
         });
     }
 
@@ -611,25 +337,10 @@ mod tests {
     fn test_successful_create_pod_response_message_envelope() {
         assert_encode_decode(&Envelope {
             version: Version::V0,
-            body: Message::ClientMessage(ClientMessage::CreatePodResponse(
-                CreatePodResponse {
-                    pod_id: POD_ID,
-                    result: ClientPodResult::Success,
-                },
-            )),
-        });
-    }
-
-    #[test]
-    fn test_successful_delete_pod_response_message_envelope() {
-        assert_encode_decode(&Envelope {
-            version: Version::V0,
-            body: Message::ClientMessage(ClientMessage::DeletePodResponse(
-                DeletePodResponse {
-                    pod_id: POD_ID,
-                    result: ClientPodResult::Success,
-                },
-            )),
+            body: Message::CreatePodResponse(CreatePodResponse {
+                pod_id: POD_ID,
+                result: CreatePodResult::Success,
+            }),
         });
     }
 
@@ -637,25 +348,10 @@ mod tests {
     fn test_unsuccessful_create_pod_response_message_envelope() {
         assert_encode_decode(&Envelope {
             version: Version::V0,
-            body: Message::ClientMessage(ClientMessage::CreatePodResponse(
-                CreatePodResponse {
-                    pod_id: POD_ID,
-                    result: ClientPodResult::Failure,
-                },
-            )),
-        });
-    }
-
-    #[test]
-    fn test_unsuccessful_delete_pod_response_message_envelope() {
-        assert_encode_decode(&Envelope {
-            version: Version::V0,
-            body: Message::ClientMessage(ClientMessage::DeletePodResponse(
-                DeletePodResponse {
-                    pod_id: POD_ID,
-                    result: ClientPodResult::Failure,
-                },
-            )),
+            body: Message::CreatePodResponse(CreatePodResponse {
+                pod_id: POD_ID,
+                result: CreatePodResult::Failure,
+            }),
         });
     }
 }

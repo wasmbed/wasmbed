@@ -24,7 +24,6 @@ use wasmbed_types::DeviceId;
 #[serde(rename_all = "camelCase")]
 pub struct DeviceSpec {
     id: DeviceId,
-    gateway: String,
 }
 
 pub async fn reconcile_device(

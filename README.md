@@ -38,6 +38,14 @@ To run the tests, run the following command:
 cargo test
 ```
 
+Some tests require integration with external components, e.g. a Kubernetes
+cluster, and they're not run by default. To enable such texts, run the following
+command:
+
+```
+cargo test -- --ignored
+```
+
 ## Tooling
 
 To run a specific tool in the project, you can use the `cargo run` command with
@@ -70,7 +78,7 @@ contributing to the project.
   to verify.
 
 Alternatively, you can run `nix flake check` to perform all the above checks at
-once.
+once (ignored end-to-end tests are not run).
 
 ### Commit Messages
 
@@ -117,6 +125,10 @@ When creating a branch, use the following naming convention:
 
 Once your branch is ready, open a pull request targeting the `master` branch. A
 maintainer will review your changes and provide feedback or approval.
+
+## Kubernetes Test Environment
+
+Please refer to [resources/k3d/README.md](resources/k3d/README.md).
 
 ## Generating Diagrams from PlantUML Files
 

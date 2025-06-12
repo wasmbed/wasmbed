@@ -1,25 +1,20 @@
 [package]
-name = "wasmbed-protocol-tool"
+name = "wasmbed-cert-tool"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true
 license.workspace = true
 
-[lints]
-workspace = true
-
 [dependencies]
 anyhow = "1.0.98"
-hex = "0.4.3"
 
 [dependencies.clap]
 version = "4.5.40"
 features = [ "derive" ]
 
-[dependencies.minicbor]
-version = "1.0.0"
-default-features = false
+[dependencies.wasmbed-cert]
+path = "../wasmbed-cert"
 
-[dependencies.wasmbed-protocol]
-path = "../wasmbed-protocol"
+[lints]
+workspace = true

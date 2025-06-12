@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
     flake-utils.url = "github:numtide/flake-utils";
     rust-overlay.url = "github:oxalica/rust-overlay";
     crane.url = "github:ipetkov/crane";
@@ -120,6 +120,8 @@
     devShells.default = craneLib.devShell {
       packages = with pkgs; [
         gnumake
+        k3d
+        kubectl
         plantuml
       ];
     };
