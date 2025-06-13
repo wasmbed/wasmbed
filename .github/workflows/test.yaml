@@ -2,7 +2,7 @@ name: Build and Test
 on:
   push:
     branches:
-      - "*"
+      - "**"
     # don't run on tags, run on commits
     # https://github.com/orgs/community/discussions/25615
     tags-ignore:
