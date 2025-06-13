@@ -36,4 +36,4 @@ features = [ "derive" ]
 
 [dependencies.wasmbed-types]
 path = "../wasmbed-types"
-features = [ "serde", "schemars" ]
+features = [ "serde", "schemars", "k8s" ]

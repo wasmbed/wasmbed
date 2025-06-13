@@ -3,7 +3,7 @@ use kube::CustomResource;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use wasmbed_types::PublicKey;
+use wasmbed_types::{GatewayReference, PublicKey};
 
 #[derive(
     Clone,
@@ -34,7 +34,7 @@ pub struct DeviceStatus {
 
     /// Gateway pod name the device is connected to
     #[serde(skip_serializing_if = "Option::is_none")]
-    gateway: Option<String>,
+    gateway: Option<GatewayReference>,
 
     /// Connection establishment timestamp
     #[serde(skip_serializing_if = "Option::is_none")]

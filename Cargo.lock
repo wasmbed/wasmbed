@@ -402,6 +402,7 @@ checksum = "aa60a41b57ae1a0a071af77dbcf89fc9819cfe66edaf2beeb204c34459dcf0b2"
 dependencies = [
  "base64",
  "chrono",
+ "schemars",
  "serde",
  "serde_json",
 ]
@@ -970,6 +971,7 @@ name = "wasmbed-types"
 version = "0.0.1"
 dependencies = [
  "base64",
+ "k8s-openapi",
  "schemars",
  "serde",
  "uuid",
