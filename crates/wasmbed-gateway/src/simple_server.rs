@@ -9,6 +9,12 @@ use tokio::signal;
 use tokio::net::TcpStream;
 use tokio_rustls::{TlsAcceptor, rustls};
 use crate::test_pki::TestPki;
+use k8s_openapi::apiextensions_apiserver::pkg::apis::apiextensions::v1::CustomResourceDefinition;
+use kube::{
+    api::{Api, DeleteParams, ListParams, Patch, PatchParams, PostParams, ResourceExt},
+    core::crd::CustomResourceExt,
+    Client, CustomResource,
+};
 use wasmbed_protocol::types::{
     ClientMessage, CreatePodResponse, DeletePodResponse, Envelope, Heartbeat,
     HeartbeatAcknowledge, Message, ServerMessage, Version,
@@ -91,6 +97,7 @@ pub struct ServerState {
     pub stopped: Arc<AtomicBool>,
     pub config: Arc<ServerConfig>,
     pub test_pki: TestPki,
+    pub kube_client: Client
 }
 
 impl ServerState {

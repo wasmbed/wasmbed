@@ -1,33 +1,24 @@
-// use kube::{Api, Client};
-// use kube::api::ListParams;
-// use tokio::sync::{Channel, mpsc};
-//
-// enum WasmbedEvents {
-//     CreateApplication(Application),
-//     DeleteApplication(Application),
-//     PairingStatus(bool),
-//     RegisterDevice(Device),
-// }
-//
-// struct WasmbedClient {
-//     client: Client,
-//     sender: Sender<Vec<u8>>,
-// }
-//
-// impl WasmbedClient {
-//     pub fn application_deployment_handler(&self) {
-//         todo!()
-//     }
-//
-//     pub fn find_device(&self) -> DeviceId {
-//         todo!()
-//     }
-//
-//     pub fn register_device(&self) {
-//         todo!()
-//     }
-//
-//     pub fn get_gateway_pairing(&self) -> bool {
-//         todo!()
-//     }
-// }
+use wasmbed::
+use k8s_openapi::apiextensions_apiserver::pkg::apis::apiextensions::v1::CustomResourceDefinition;
+use kube::{
+    api::{
+        Api, DeleteParams, ListParams, Patch, PatchParams, PostParams,
+        ResourceExt,
+    },
+    core::crd::CustomResourceExt,
+    Client, CustomResource,
+};
+
+
+pub struct KubeClient{Client};
+
+impl KubeClient {
+    pub async fn new() -> Result<Self> {
+        Client::try_default().await?
+    }
+    pub async fn add_device() -> Result<()> {
+
+
+    }
+}
+
