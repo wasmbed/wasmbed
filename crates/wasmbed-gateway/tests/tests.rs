@@ -1,51 +1,12 @@
 use std::fs::File;
 use std::io::Write;
 
-const CA_PATH: &'static str = "./test-certs/ca/ca.pem";
-const CLIENT_CERT_PATH: &'static str = "./test-certs/client/client-cert.pem";
-const CLIENT_KEY_PATH: &'static str = "./test-certs/client/client-key.pem";
 const SERVER_PORT: u16 = 6443;
 const SERVER_ADDRESS: &'static str = "127.0.0.1";
 
 fn write_pem(path: &str, pem: &str) {
     let mut file = File::create(path).unwrap();
     file.write_all(pem.as_bytes()).unwrap();
-}
-
-#[cfg(test)]
-mod certificate_gen {
-
-    use super::*;
-    use std::fs;
-    use wasmbed_gateway::simple_server::Server;
-
-    // Test Certificate Creation
-    #[test]
-    #[ignore = "unnecessary"]
-    fn generate_certs() {
-        let server = Server::new(SERVER_ADDRESS.to_string(), SERVER_PORT);
-        write_pem(CA_PATH, &server.state.test_pki.ca_cert.cert.pem());
-        write_pem(
-            CLIENT_CERT_PATH,
-            &server.state.test_pki.client_cert.cert.pem(),
-        );
-        write_pem(
-            CLIENT_KEY_PATH,
-            &server.state.test_pki.client_cert.key_pair.serialize_pem(),
-        );
-
-        assert_eq!(true, fs::exists(CA_PATH).unwrap_or(false));
-        assert_eq!(true, fs::exists(CLIENT_CERT_PATH).unwrap_or(false));
-        assert_eq!(true, fs::exists(CLIENT_KEY_PATH).unwrap_or(false));
-
-        fs::remove_file(CA_PATH).unwrap();
-        fs::remove_file(CLIENT_CERT_PATH).unwrap();
-        fs::remove_file(CLIENT_KEY_PATH).unwrap();
-
-        assert_eq!(false, fs::exists(CA_PATH).unwrap_or(false));
-        assert_eq!(false, fs::exists(CLIENT_CERT_PATH).unwrap_or(false));
-        assert_eq!(false, fs::exists(CLIENT_CERT_PATH).unwrap_or(false));
-    }
 }
 
 #[cfg(test)]
@@ -90,10 +51,10 @@ mod client {
         envelope
     }
 
-    fn write_pem(path: &str, pem: &str) {
-        let mut file = File::create(path).unwrap();
-        file.write_all(pem.as_bytes()).unwrap();
-    }
+    // fn write_pem(path: &str, pem: &str) {
+    //     let mut file = File::create(path).unwrap();
+    //     file.write_all(pem.as_bytes()).unwrap();
+    // }
 
     async fn start_server(
         port: u16,

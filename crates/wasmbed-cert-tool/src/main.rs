@@ -10,8 +10,10 @@ use wasmbed_cert::{DistinguishedName, DnType, ClientAuthority, ServerAuthority};
 
 const SERVER_CA_PATH: &'static str = "./certificates/server/ca/";
 const CLIENT_CA_PATH: &'static str = "./certificates/client/ca/";
-const ISSUED_CLIENT_CERT_KEY: &'static str = "./certificates/client/cert_key/";
-const ISSUED_SERVER_CERT_KEY: &'static str = "./certificates/server/cert_key/";
+const ISSUED_CLIENT_CERT_KEY: &'static str =
+    "./certificates/client/issued_cert/";
+const ISSUED_SERVER_CERT_KEY: &'static str =
+    "./certificates/server/issued_cert/";
 
 fn create_cert_dir() {
     let _ = create_dir_all(SERVER_CA_PATH);
