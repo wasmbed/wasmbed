@@ -9,37 +9,34 @@ license.workspace = true
 [lints]
 workspace = true
 
+[features]
+serde = [ "dep:serde", "dep:base64" ]
+schemars = [ "serde", "dep:schemars" ]
+k8s = [ "serde", "schemars", "dep:k8s-openapi" ]
+
 [dependencies]
 
-[dependencies.minicbor]
-version = "1.0.0"
+[dependencies.base64]
+version = "0.22.1"
 default-features = false
-
-[dependencies.uuid]
-version = "1.17.0"
-default-features = false
-features = [ "v4" ]
-
-[features]
-serde = [ "dep:serde", "uuid/serde" ]
-schemars = [ "dep:schemars", "dep:serde_json" ]
+optional = true
 
 [dependencies.schemars]
 version = "0.8.22"
 optional = true
 features = [ "uuid1" ]
 
+[dependencies.k8s-openapi]
+version = "0.25.0"
+features = [ "schemars", "v1_32" ]
+optional = true
+
 [dependencies.serde]
 version = "1.0.219"
 features = [ "derive" ]
 optional = true
 
-[dependencies.serde_json]
-version = "1.0.140"
-optional = true
-
-[dev-dependencies]
-
-[dev-dependencies.wasmbed-test-utils]
-path = "../wasmbed-test-utils"
-features = [ "minicbor" ]
+[dependencies.uuid]
+version = "1.17.0"
+default-features = false
+features = [ "v4" ]

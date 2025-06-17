@@ -53,6 +53,7 @@ mod client {
     use super::*;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     use tokio::task::JoinHandle;
+    use wasmbed_gateway::kube_handler::KubeClient;
     use std::io::Error;
     use tokio::time::sleep;
     use tokio_rustls::TlsConnector;
@@ -98,7 +99,8 @@ mod client {
         port: u16,
         addr: &str,
     ) -> (Arc<Server>, JoinHandle<()>) {
-        let server = Arc::new(Server::new(addr.to_string(), port));
+        let kube_client = KubeClient::new().await.unwrap();
+        let server = Arc::new(Server::new(addr.to_string(), port, kube_client));
         write_pem(CA_PATH, &server.state.test_pki.ca_cert.cert.pem());
         write_pem(
             CLIENT_CERT_PATH,

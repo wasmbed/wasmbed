@@ -8,10 +8,14 @@ use tokio::net::TcpListener;
 use tokio::signal;
 use tokio::net::TcpStream;
 use tokio_rustls::{TlsAcceptor, rustls};
+use crate::kube_handler::KubeClient;
 use crate::test_pki::TestPki;
 use k8s_openapi::apiextensions_apiserver::pkg::apis::apiextensions::v1::CustomResourceDefinition;
 use kube::{
-    api::{Api, DeleteParams, ListParams, Patch, PatchParams, PostParams, ResourceExt},
+    api::{
+        Api, DeleteParams, ListParams, Patch, PatchParams, PostParams,
+        ResourceExt,
+    },
     core::crd::CustomResourceExt,
     Client, CustomResource,
 };
@@ -97,11 +101,15 @@ pub struct ServerState {
     pub stopped: Arc<AtomicBool>,
     pub config: Arc<ServerConfig>,
     pub test_pki: TestPki,
-    pub kube_client: Client
+    pub kube_client: Client,
 }
 
 impl ServerState {
-    pub fn new(address: String, port: u16) -> Self {
+    pub async fn new(
+        address: String,
+        port: u16,
+        kube_client: KubeClient,
+    ) -> Self {
         let test_pki = TestPki::new();
         ServerState {
             address,
@@ -109,6 +117,7 @@ impl ServerState {
             stopped: Arc::new(AtomicBool::new(false)),
             config: test_pki.server_config(),
             test_pki,
+            kube_client,
         }
     }
 }
@@ -118,9 +127,9 @@ pub struct Server {
 }
 
 impl Server {
-    pub fn new(address: String, port: u16) -> Self {
+    pub fn new(address: String, port: u16, kube_client: KubeClient) -> Self {
         Server {
-            state: ServerState::new(address, port),
+            state: ServerState::new(address, port, kube_client),
         }
     }
 

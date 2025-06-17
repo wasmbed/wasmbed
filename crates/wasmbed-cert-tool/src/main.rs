@@ -1,9 +1,24 @@
-use std::{error::Error, fs, path::PathBuf};
+use std::{
+    fs::{self, create_dir_all},
+    path::PathBuf,
+};
 
 use clap::{Parser, Subcommand, ValueEnum};
 use anyhow::{Context, Result};
 
 use wasmbed_cert::{DistinguishedName, DnType, ClientAuthority, ServerAuthority};
+
+const SERVER_CA_PATH: &'static str = "./certificates/server/ca/";
+const CLIENT_CA_PATH: &'static str = "./certificates/client/ca/";
+const ISSUED_CLIENT_CERT_KEY: &'static str = "./certificates/client/cert_key/";
+const ISSUED_SERVER_CERT_KEY: &'static str = "./certificates/server/cert_key/";
+
+fn create_cert_dir() {
+    let _ = create_dir_all(SERVER_CA_PATH);
+    let _ = create_dir_all(CLIENT_CA_PATH);
+    let _ = create_dir_all(ISSUED_CLIENT_CERT_KEY);
+    let _ = create_dir_all(ISSUED_SERVER_CERT_KEY);
+}
 
 #[derive(Parser)]
 #[command()]
@@ -106,9 +121,9 @@ fn build_distinguished_name(args: &Command) -> DistinguishedName {
 }
 
 fn main() -> Result<()> {
-    let crate_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let workspace_root = crate_root.parent().unwrap().to_str().unwrap();
     let cli = Args::parse();
+    create_cert_dir();
+
     match &cli.command {
         Command::GenerateCa {
             kind, out_prefix, ..
@@ -116,26 +131,16 @@ fn main() -> Result<()> {
             let dn = build_distinguished_name(&cli.command);
             match kind {
                 CertKind::Server => {
-                    fs::create_dir_all(format!(
-                        "{}/certificates/ca/server",
-                        workspace_root
-                    ))?;
                     let cred = ServerAuthority::new(dn)?;
                     fs::write(
-                        format!(
-                            "{}/certificates/ca/server/{}.key",
-                            workspace_root, out_prefix
-                        ),
+                        format!("{}{}.key", SERVER_CA_PATH, out_prefix),
                         cred.key_pair_der(),
                     )
                     .with_context(|| {
                         format!("failed to write {}.key", out_prefix)
                     })?;
                     fs::write(
-                        format!(
-                            "{}/certificates/ca/server/{}.der",
-                            workspace_root, out_prefix
-                        ),
+                        format!("{}{}.der", SERVER_CA_PATH, out_prefix),
                         cred.certificate_der(),
                     )
                     .with_context(|| {
@@ -143,26 +148,16 @@ fn main() -> Result<()> {
                     })?;
                 },
                 CertKind::Client => {
-                    fs::create_dir_all(format!(
-                        "{}/certificates/ca/client",
-                        workspace_root
-                    ))?;
                     let cred = ClientAuthority::new(dn)?;
                     fs::write(
-                        format!(
-                            "{}/certificates/ca/client/{}.key",
-                            workspace_root, out_prefix
-                        ),
+                        format!("{}{}.key", CLIENT_CA_PATH, out_prefix),
                         cred.key_pair_der(),
                     )
                     .with_context(|| {
                         format!("failed to write {}.key", out_prefix)
                     })?;
                     fs::write(
-                        format!(
-                            "{}/certificates/ca/client/{}.der",
-                            workspace_root, out_prefix
-                        ),
+                        format!("{}{}.der", CLIENT_CA_PATH, out_prefix),
                         cred.certificate_der(),
                     )
                     .with_context(|| {
@@ -189,27 +184,17 @@ fn main() -> Result<()> {
 
             match kind {
                 CertKind::Server => {
-                    fs::create_dir_all(format!(
-                        "{}/certificates/issued/server",
-                        workspace_root
-                    ))?;
                     let ca = ServerAuthority::from_der(&key_der, &ca_der)?;
                     let issued = ca.issue_certificate(dn)?;
                     fs::write(
-                        format!(
-                            "{}/certificate/issued/server/{}.key",
-                            workspace_root, out_prefix
-                        ),
+                        format!("{}{}.key", ISSUED_SERVER_CERT_KEY, out_prefix),
                         issued.key_pair_der(),
                     )
                     .with_context(|| {
                         format!("failed to write {}.key", out_prefix)
                     })?;
                     fs::write(
-                        format!(
-                            "{}/certificate/issued/server/{}.der",
-                            workspace_root, out_prefix
-                        ),
+                        format!("{}{}.der", ISSUED_SERVER_CERT_KEY, out_prefix),
                         issued.certificate_der(),
                     )
                     .with_context(|| {
@@ -217,27 +202,17 @@ fn main() -> Result<()> {
                     })?;
                 },
                 CertKind::Client => {
-                    fs::create_dir_all(format!(
-                        "{}/certificates/issued/client",
-                        workspace_root
-                    ))?;
                     let ca = ClientAuthority::from_der(&key_der, &ca_der)?;
                     let issued = ca.issue_certificate(dn)?;
                     fs::write(
-                        format!(
-                            "{}/certificate/issued/client/{}.key",
-                            workspace_root, out_prefix
-                        ),
+                        format!("{}{}.key", ISSUED_CLIENT_CERT_KEY, out_prefix),
                         issued.key_pair_der(),
                     )
                     .with_context(|| {
                         format!("failed to write {}.key", out_prefix)
                     })?;
                     fs::write(
-                        format!(
-                            "{}/certificate/issued/client/{}.der",
-                            workspace_root, out_prefix
-                        ),
+                        format!("{}{}.der", ISSUED_CLIENT_CERT_KEY, out_prefix),
                         issued.certificate_der(),
                     )
                     .with_context(|| {
