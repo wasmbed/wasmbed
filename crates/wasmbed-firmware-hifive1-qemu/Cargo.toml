@@ -1,0 +1,33 @@
+[package]
+name = "wasmbed-firmware-hifive1-qemu"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "wasmbed-firmware-hifive1-qemu"
+test = false
+
+[dependencies]
+defmt = "1.0.1"
+defmt-serial = "0.10.0"
+panic-halt = "1.0.0"
+riscv = "0.13.0"
+static_cell = "2.1.0"
+
+[dependencies.embassy-executor]
+version = "0.7.0"
+features = [ "arch-riscv32", "executor-thread" ]
+
+[dependencies.hifive1]
+version = "0.13.0"
+features = [ "board-hifive1-revb" ]
+
+[dependencies.riscv-rt]
+version = "0.13.0"
+features = [ "single-hart" ]

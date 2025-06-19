@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "crates/wasmbed-cert",
     "crates/wasmbed-cert-tool",
+    "crates/wasmbed-firmware-hifive1-qemu",
     "crates/wasmbed-k8s-controller",
     "crates/wasmbed-k8s-resource",
     "crates/wasmbed-k8s-resource-tool",
@@ -18,6 +19,12 @@ authors = [ "Tancredi Orlando <tancredi.orlando@gmail.com>" ]
 edition = "2024"
 repository = "https://github.com/turlando/wasmed"
 license = "AGPL-3.0"
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
 
 [workspace.metadata.crane]
 name = "wasmbed"

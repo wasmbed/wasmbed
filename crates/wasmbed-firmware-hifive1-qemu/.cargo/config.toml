@@ -1,0 +1,23 @@
+[build]
+target = "riscv32imac-unknown-none-elf"
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+codegen-units = 1
+debug = 2
+lto = "full"
+opt-level = "z"
+panic = "abort"
+
+[target.riscv32imac-unknown-none-elf]
+rustflags = [
+    "-C", "link-arg=--nmagic",
+    "-C", "link-arg=-Thifive1-link.x",
+    "-C", "link-arg=-Tdefmt.x",
+]
+runner = [ "sh", "run.sh" ]
+
+[env]
+DEFMT_LOG = "trace"

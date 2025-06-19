@@ -115,14 +115,27 @@
             cp *.svg $out
           '';
         };
+        defmt-print = craneLib.buildPackage {
+          pname = "defmt-print";
+          version = "1.0.0";
+          src = pkgs.fetchCrate {
+            pname = "defmt-print";
+            version = "1.0.0";
+            sha256 = "sha256-rio5kAL6NR7vBtjPF0GxDcINeWw+LuZWe7nFN0UkdBg=";
+          };
+          doCheck = false;
+        };
       };
 
     devShells.default = craneLib.devShell {
-      packages = with pkgs; [
-        gnumake
-        k3d
-        kubectl
-        plantuml
+      packages = [
+        pkgs.gnumake
+        pkgs.k3d
+        pkgs.kubectl
+        pkgs.plantuml
+        pkgs.qemu
+        pkgs.socat
+        self.packages.${system}.defmt-print
       ];
     };
 
