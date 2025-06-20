@@ -1,4 +1,7 @@
 use rustls::server::ServerConfig;
+use wasmbed_protocol::ClientEnvelope;
+use wasmbed_protocol::ClientMessage;
+use wasmbed_protocol::ServerEnvelope;
 use std::io::Error;
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
@@ -10,11 +13,8 @@ use tokio::net::TcpStream;
 use tokio_rustls::{TlsAcceptor, rustls};
 use crate::kube_handler::KubeClient;
 use crate::test_pki::TestPki;
-use kube::CustomResource;
-use wasmbed_protocol::types::{
-    ClientMessage, CreatePodResponse, DeletePodResponse, Envelope, Heartbeat,
-    HeartbeatAcknowledge, Message, ServerMessage, Version,
-};
+// use kube::CustomResource;
+use wasmbed_protocol::{ServerMessage, Version};
 
 const ERROR_CLIENT_DECODE_MESSAGE: &'static str =
     "Client Error decoding client message";
@@ -31,25 +31,21 @@ pub async fn process_message(
     // Read the request
     let mut buffer = [0; 1024];
     let n = tls_stream.read(&mut buffer).await?;
-    let envelope = minicbor::decode::<Envelope>(&buffer[0..n]).map_err(|_| {
-        Error::new(std::io::ErrorKind::Other, ERROR_CLIENT_DECODE_MESSAGE)
-    });
+    let envelope =
+        minicbor::decode::<ClientEnvelope>(&buffer[0..n]).map_err(|_| {
+            Error::new(std::io::ErrorKind::Other, ERROR_CLIENT_DECODE_MESSAGE)
+        });
 
     match envelope {
-        Result::Ok(Envelope {
+        Result::Ok(ClientEnvelope {
+            message_id: id,
             version: Version::V0,
-            body:
-                Message::ClientMessage(ClientMessage::Heartbeat(
-                    Heartbeat::Heartbeat,
-                )),
+            message: ClientMessage::Heartbeat,
         }) => {
-            let heartbeat_reply = Envelope {
+            let heartbeat_reply = ServerEnvelope {
+                message_id: id,
                 version: Version::V0,
-                body: Message::ServerMessage(
-                    ServerMessage::HeartbeatAcknowledge(
-                        HeartbeatAcknowledge::HeartbeatAcknowledge,
-                    ),
-                ),
+                message: ServerMessage::HeartbeatAck,
             };
 
             let encoded_message = minicbor::to_vec(heartbeat_reply).unwrap();
@@ -57,28 +53,27 @@ pub async fn process_message(
             Ok(())
         },
 
-        Result::Ok(Envelope {
-            version: Version::V0,
-            body:
-                Message::ClientMessage(ClientMessage::CreatePodResponse(
-                    CreatePodResponse { pod_id, result },
-                )),
-        }) => {
-            // Do Something
-            Ok(())
-        },
+        // Result::Ok(Envelope {
+        //     version: Version::V0,
+        //     body:
+        //         Message::ClientMessage(ClientMessage::CreatePodResponse(
+        //             CreatePodResponse { pod_id, result },
+        //         )),
+        // }) => {
+        //     // Do Something
+        //     Ok(())
+        // },
 
-        Result::Ok(Envelope {
-            version: Version::V0,
-            body:
-                Message::ClientMessage(ClientMessage::DeletePodResponse(
-                    DeletePodResponse { pod_id, result },
-                )),
-        }) => {
-            // Do Something
-            Ok(())
-        },
-
+        // Result::Ok(Envelope {
+        //     version: Version::V0,
+        //     body:
+        //         Message::ClientMessage(ClientMessage::DeletePodResponse(
+        //             DeletePodResponse { pod_id, result },
+        //         )),
+        // }) => {
+        //     // Do Something
+        //     Ok(())
+        // },
         _ => Err(Error::new(
             std::io::ErrorKind::Other,
             ERROR_CLIENT_INVALID_MESSAGE,

@@ -460,6 +460,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+ "unicode-xid",
 ]
 
 [[package]]
@@ -924,31 +925,21 @@ dependencies = [
 
 [[package]]
 name = "kube"
-version = "0.99.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a4eb20010536b48abe97fec37d23d43069bcbe9686adcf9932202327bc5ca6e"
-dependencies = [
- "k8s-openapi 0.24.0",
- "kube-client",
- "kube-core 0.99.0",
-]
-
-[[package]]
-name = "kube"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "778f98664beaf4c3c11372721e14310d1ae00f5e2d9aabcf8906c881aa4e9f51"
 dependencies = [
  "k8s-openapi 0.25.0",
- "kube-core 1.1.0",
+ "kube-client",
+ "kube-core",
  "kube-derive",
 ]
 
 [[package]]
 name = "kube-client"
-version = "0.99.0"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fc2ed952042df20d15ac2fe9614d0ec14b6118eab89633985d4b36e688dccf1"
+checksum = "7cb276b85b6e94ded00ac8ea2c68fcf4697ea0553cb25fddc35d4a0ab718db8d"
 dependencies = [
  "base64",
  "bytes",
@@ -965,8 +956,8 @@ dependencies = [
  "hyper-timeout",
  "hyper-util",
  "jsonpath-rust",
- "k8s-openapi 0.24.0",
- "kube-core 0.99.0",
+ "k8s-openapi 0.25.0",
+ "kube-core",
  "pem",
  "rustls",
  "secrecy",
@@ -979,22 +970,6 @@ dependencies = [
  "tower",
  "tower-http",
  "tracing",
-]
-
-[[package]]
-name = "kube-core"
-version = "0.99.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ff0d0793db58e70ca6d689489183816cb3aa481673e7433dc618cf7e8007c675"
-dependencies = [
- "chrono",
- "form_urlencoded",
- "http",
- "k8s-openapi 0.24.0",
- "serde",
- "serde-value",
- "serde_json",
- "thiserror 2.0.12",
 ]
 
 [[package]]
@@ -1093,31 +1068,11 @@ checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 
 [[package]]
 name = "minicbor"
-version = "0.26.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a309f581ade7597820083bc275075c4c6986e57e53f8d26f88507cfefc8c987"
-dependencies = [
- "minicbor-derive 0.16.2",
-]
-
-[[package]]
-name = "minicbor"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "50699691433ccd88fbe1f11e9155691d71fc363595109f35a92b77be2e0158f6"
 dependencies = [
- "minicbor-derive 0.17.0",
-]
-
-[[package]]
-name = "minicbor-derive"
-version = "0.16.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a9882ef5c56df184b8ffc107fc6c61e33ee3a654b021961d790a78571bb9d67a"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
+ "minicbor-derive",
 ]
 
 [[package]]
@@ -2049,6 +2004,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5a5f39404a5da50712a4c1eecf25e90dd62b613502b7e925fd4e4d19b5c96512"
 
 [[package]]
+name = "unicode-xid"
+version = "0.2.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ebc1c04c71510c7f702b52b7c350734c9ff1295c464a03335b00bb84fc54f853"
+
+[[package]]
 name = "unsafe-libyaml"
 version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2127,13 +2088,16 @@ name = "wasmbed-gateway"
 version = "0.0.1"
 dependencies = [
  "ctrlc",
+ "either",
  "k8s-openapi 0.24.0",
- "kube 0.99.0",
- "minicbor 0.26.5",
+ "kube",
+ "minicbor",
  "rcgen",
  "rustls",
  "tokio",
  "tokio-rustls",
+ "wasmbed-cert",
+ "wasmbed-k8s-resource",
  "wasmbed-protocol",
 ]
 
@@ -2147,7 +2111,7 @@ version = "0.0.1"
 dependencies = [
  "chrono",
  "k8s-openapi 0.25.0",
- "kube 1.1.0",
+ "kube",
  "schemars",
  "serde",
  "serde_json",
@@ -2160,7 +2124,7 @@ version = "0.0.1"
 dependencies = [
  "anyhow",
  "clap",
- "kube 1.1.0",
+ "kube",
  "serde_yaml",
  "wasmbed-k8s-resource",
 ]
@@ -2169,8 +2133,8 @@ dependencies = [
 name = "wasmbed-protocol"
 version = "0.0.1"
 dependencies = [
- "minicbor 1.0.0",
- "uuid",
+ "derive_more",
+ "minicbor",
  "wasmbed-test-utils",
 ]
 
@@ -2181,7 +2145,7 @@ dependencies = [
  "anyhow",
  "clap",
  "hex",
- "minicbor 1.0.0",
+ "minicbor",
  "wasmbed-protocol",
 ]
 
@@ -2189,7 +2153,7 @@ dependencies = [
 name = "wasmbed-test-utils"
 version = "0.0.1"
 dependencies = [
- "minicbor 1.0.0",
+ "minicbor",
 ]
 
 [[package]]
