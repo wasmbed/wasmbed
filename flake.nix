@@ -41,26 +41,19 @@
           (_: type: type == "directory")
           (builtins.readDir path));
 
-    # crateMeta :: str -> { pname: str; version: str; }
-    crateMeta = name: {
-      inherit
-        (craneLib.crateNameFromCargoToml { cargoToml = ./crates/${name}/Cargo.toml; })
-        pname version;
-    };
-
     # buildCrate :: str -> drv
     buildCrate = name: craneLib.buildPackage {
-      inherit (crateMeta name);
-      inherit src;
+      inherit name src;
       strictDeps = true;
       doCheck = false;
       cargoArtifacts = workspaceDeps;
       cargoExtraArgs = "-p ${name}";
+      meta.mainProgram = name;
     };
 
     # testCrate :: str -> drv
     testCrate = name: craneLib.cargoTest {
-      inherit (crateMeta name);
+      name = "${name}-test";
       inherit src;
       strictDeps = true;
       cargoArtifacts = workspaceDeps;
@@ -69,6 +62,7 @@
 
     # clippyCrate :: str -> drv
     clippyCrate = name: craneLib.cargoClippy {
+      name = "${name}-clippy";
       inherit src;
       strictDeps = true;
       cargoArtifacts = workspaceDeps;
@@ -77,6 +71,7 @@
 
     # fmtCrate :: str -> drv
     fmtCrate = name: craneLib.cargoFmt {
+      name = "${name}-fmt";
       inherit src;
       structDeps = true;
       cargoArtifacts = workspaceDeps;
