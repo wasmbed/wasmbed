@@ -23,7 +23,7 @@ use wasmbed_types::{GatewayReference, PublicKey};
 )]
 #[serde(rename_all = "camelCase")]
 pub struct DeviceSpec {
-    public_key: PublicKey<'static>,
+    pub public_key: PublicKey<'static>,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]

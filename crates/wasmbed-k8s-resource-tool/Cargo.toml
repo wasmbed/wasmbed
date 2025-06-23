@@ -21,5 +21,9 @@ default-features = false
 [dependencies.wasmbed-k8s-resource]
 path = "../wasmbed-k8s-resource"
 
+[dependencies.wasmbed-types]
+path = "../wasmbed-types"
+features = [ "k8s" ]
+
 [lints]
 workspace = true

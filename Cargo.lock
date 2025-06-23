@@ -1270,6 +1270,7 @@ dependencies = [
  "kube",
  "serde_yaml",
  "wasmbed-k8s-resource",
+ "wasmbed-types",
 ]
 
 [[package]]
