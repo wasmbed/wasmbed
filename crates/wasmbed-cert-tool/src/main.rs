@@ -1,4 +1,4 @@
-use std::{fs, path::PathBuf};
+use std::path::PathBuf;
 
 use clap::{Parser, Subcommand, ValueEnum};
 use anyhow::{Context, Result};
@@ -6,7 +6,7 @@ use anyhow::{Context, Result};
 use wasmbed_cert::{DistinguishedName, DnType, ClientAuthority, ServerAuthority};
 
 #[derive(Parser)]
-#[command()]
+#[command(disable_help_subcommand = true)]
 struct Args {
     #[command(subcommand)]
     command: Command,
@@ -29,8 +29,10 @@ enum Command {
         state: Option<String>,
         #[arg(long)]
         locality: Option<String>,
-        #[arg(long, default_value = "ca")]
-        out_prefix: String,
+        #[arg(long, help = "Output path for the private key (e.g., ca.key)")]
+        out_key: PathBuf,
+        #[arg(long, help = "Output path for the certificate (e.g., ca.der)")]
+        out_cert: PathBuf,
     },
 
     IssueCert {
@@ -52,8 +54,16 @@ enum Command {
         state: Option<String>,
         #[arg(long)]
         locality: Option<String>,
-        #[arg(long, default_value = "cert")]
-        out_prefix: String,
+        #[arg(
+            long,
+            help = "Output path for the private key (e.g., identity.key)"
+        )]
+        out_key: PathBuf,
+        #[arg(
+            long,
+            help = "Output path for the certificate (e.g., identity.der)"
+        )]
+        out_cert: PathBuf,
     },
 }
 
@@ -110,43 +120,32 @@ fn main() -> Result<()> {
 
     match &cli.command {
         Command::GenerateCa {
-            kind, out_prefix, ..
+            kind,
+            out_key,
+            out_cert,
+            ..
         } => {
             let dn = build_distinguished_name(&cli.command);
             match kind {
                 CertKind::Server => {
                     let cred = ServerAuthority::new(dn)?;
-                    fs::write(
-                        format!("{}.key", out_prefix),
-                        cred.key_pair_der(),
-                    )
-                    .with_context(|| {
-                        format!("failed to write {}.key", out_prefix)
-                    })?;
-                    fs::write(
-                        format!("{}.der", out_prefix),
-                        cred.certificate_der(),
-                    )
-                    .with_context(|| {
-                        format!("failed to write {}.der", out_prefix)
-                    })?;
+                    std::fs::write(out_key, cred.key_pair_der()).with_context(
+                        || format!("failed to write {:?}", out_key),
+                    )?;
+                    std::fs::write(out_cert, cred.certificate_der())
+                        .with_context(|| {
+                            format!("failed to write {:?}", out_cert)
+                        })?;
                 },
                 CertKind::Client => {
                     let cred = ClientAuthority::new(dn)?;
-                    fs::write(
-                        format!("{}.key", out_prefix),
-                        cred.key_pair_der(),
-                    )
-                    .with_context(|| {
-                        format!("failed to write {}.key", out_prefix)
-                    })?;
-                    fs::write(
-                        format!("{}.der", out_prefix),
-                        cred.certificate_der(),
-                    )
-                    .with_context(|| {
-                        format!("failed to write {}.der", out_prefix)
-                    })?;
+                    std::fs::write(out_key, cred.key_pair_der()).with_context(
+                        || format!("failed to write {:?}", out_key),
+                    )?;
+                    std::fs::write(out_cert, cred.certificate_der())
+                        .with_context(|| {
+                            format!("failed to write {:?}", out_cert)
+                        })?;
                 },
             }
         },
@@ -155,13 +154,14 @@ fn main() -> Result<()> {
             kind,
             ca_key,
             ca_cert,
-            out_prefix,
+            out_key,
+            out_cert,
             ..
         } => {
-            let ca_der = fs::read(ca_cert).with_context(|| {
+            let ca_der = std::fs::read(ca_cert).with_context(|| {
                 format!("failed to read CA cert from {:?}", ca_cert)
             })?;
-            let key_der = fs::read(ca_key).with_context(|| {
+            let key_der = std::fs::read(ca_key).with_context(|| {
                 format!("failed to read CA key from {:?}", ca_key)
             })?;
             let dn = build_distinguished_name(&cli.command);
@@ -170,38 +170,26 @@ fn main() -> Result<()> {
                 CertKind::Server => {
                     let ca = ServerAuthority::from_der(&key_der, &ca_der)?;
                     let issued = ca.issue_certificate(dn)?;
-                    fs::write(
-                        format!("{}.key", out_prefix),
-                        issued.key_pair_der(),
-                    )
-                    .with_context(|| {
-                        format!("failed to write {}.key", out_prefix)
-                    })?;
-                    fs::write(
-                        format!("{}.der", out_prefix),
-                        issued.certificate_der(),
-                    )
-                    .with_context(|| {
-                        format!("failed to write {}.der", out_prefix)
-                    })?;
+                    std::fs::write(out_key, issued.key_pair_der())
+                        .with_context(|| {
+                            format!("failed to write {:?}", out_key)
+                        })?;
+                    std::fs::write(out_cert, issued.certificate_der())
+                        .with_context(|| {
+                            format!("failed to write {:?}", out_cert)
+                        })?;
                 },
                 CertKind::Client => {
                     let ca = ClientAuthority::from_der(&key_der, &ca_der)?;
                     let issued = ca.issue_certificate(dn)?;
-                    fs::write(
-                        format!("{}.key", out_prefix),
-                        issued.key_pair_der(),
-                    )
-                    .with_context(|| {
-                        format!("failed to write {}.key", out_prefix)
-                    })?;
-                    fs::write(
-                        format!("{}.der", out_prefix),
-                        issued.certificate_der(),
-                    )
-                    .with_context(|| {
-                        format!("failed to write {}.der", out_prefix)
-                    })?;
+                    std::fs::write(out_key, issued.key_pair_der())
+                        .with_context(|| {
+                            format!("failed to write {:?}", out_key)
+                        })?;
+                    std::fs::write(out_cert, issued.certificate_der())
+                        .with_context(|| {
+                            format!("failed to write {:?}", out_cert)
+                        })?;
                 },
             }
         },
