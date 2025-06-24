@@ -1219,6 +1219,7 @@ version = "0.0.1"
 dependencies = [
  "rcgen",
  "rustls-pki-types",
+ "wasmbed-types",
 ]
 
 [[package]]

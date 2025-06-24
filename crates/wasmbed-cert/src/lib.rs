@@ -8,6 +8,7 @@ use rcgen::{
     ExtendedKeyUsagePurpose, IsCa, KeyPair, KeyUsagePurpose, PKCS_ED25519,
 };
 use rustls_pki_types::CertificateDer;
+use wasmbed_types::PublicKey;
 
 pub use rcgen::{DistinguishedName, DnType};
 
@@ -61,6 +62,12 @@ impl Credential {
     /// The key pair serialized in PKCS#8 DER format, including the private key.
     fn key_pair_der(&self) -> &[u8] {
         self.key_pair.serialized_der()
+    }
+
+    /// The public key encoded in DER format using the X.509
+    /// `SubjectPublicKeyInfo` structure.
+    fn public_key_der(&self) -> PublicKey<'static> {
+        self.key_pair.public_key_der().into()
     }
 
     /// The X.509 certificate encoded in DER format.
@@ -127,6 +134,12 @@ impl Authority {
         self.0.key_pair_der()
     }
 
+    /// The public key encoded in DER format using the X.509
+    /// `SubjectPublicKeyInfo` structure.
+    fn public_key_der(&self) -> PublicKey<'static> {
+        self.0.public_key_der()
+    }
+
     /// The X.509 certificate encoded in DER format.
     fn certificate_der(&self) -> &CertificateDer<'static> {
         self.0.certificate_der()
@@ -167,6 +180,12 @@ impl ServerAuthority {
         self.0.key_pair_der()
     }
 
+    /// The public key encoded in DER format using the X.509
+    /// `SubjectPublicKeyInfo` structure.
+    pub fn public_key_der(&self) -> PublicKey<'static> {
+        self.0.public_key_der()
+    }
+
     /// The X.509 certificate encoded in DER format.
     pub fn certificate_der(&self) -> &CertificateDer<'static> {
         self.0.certificate_der()
@@ -204,6 +223,12 @@ impl ClientAuthority {
         self.0.key_pair_der()
     }
 
+    /// The public key encoded in DER format using the X.509
+    /// `SubjectPublicKeyInfo` structure.
+    pub fn public_key_der(&self) -> PublicKey<'static> {
+        self.0.public_key_der()
+    }
+
     /// The X.509 certificate encoded in DER format.
     pub fn certificate_der(&self) -> &CertificateDer<'static> {
         self.0.certificate_der()
@@ -224,6 +249,12 @@ impl Identity {
         self.0.key_pair_der()
     }
 
+    /// The public key encoded in DER format using the X.509
+    /// `SubjectPublicKeyInfo` structure.
+    fn public_key_der(&self) -> PublicKey<'static> {
+        self.0.public_key_der()
+    }
+
     /// The X.509 certificate encoded in DER format.
     fn certificate_der(&self) -> &CertificateDer<'static> {
         self.0.certificate_der()
@@ -236,6 +267,12 @@ impl ServerIdentity {
         self.0.key_pair_der()
     }
 
+    /// The public key encoded in DER format using the X.509
+    /// `SubjectPublicKeyInfo` structure.
+    pub fn public_key_der(&self) -> PublicKey<'static> {
+        self.0.public_key_der()
+    }
+
     /// The X.509 certificate encoded in DER format.
     pub fn certificate_der(&self) -> &CertificateDer<'static> {
         self.0.certificate_der()
@@ -246,6 +283,12 @@ impl ClientIdentity {
     /// The key pair serialized in PKCS#8 DER format, including the private key.
     pub fn key_pair_der(&self) -> &[u8] {
         self.0.key_pair_der()
+    }
+
+    /// The public key encoded in DER format using the X.509
+    /// `SubjectPublicKeyInfo` structure.
+    pub fn public_key_der(&self) -> PublicKey<'static> {
+        self.0.public_key_der()
     }
 
     /// The X.509 certificate encoded in DER format.
@@ -327,6 +370,7 @@ mod tests {
 
         // Keys should be identical
         assert_eq!(original_ca.key_pair_der(), restored_ca.key_pair_der());
+        assert_eq!(original_ca.public_key_der(), restored_ca.public_key_der());
 
         // Certificates may differ due to reconstruction, but should be valid
         assert!(!restored_ca.certificate_der().is_empty());
@@ -341,6 +385,8 @@ mod tests {
         let restored_ca = ClientAuthority::from_der(key_der, cert_der).unwrap();
 
         assert_eq!(original_ca.key_pair_der(), restored_ca.key_pair_der());
+        assert_eq!(original_ca.public_key_der(), restored_ca.public_key_der());
+
         assert!(!restored_ca.certificate_der().is_empty());
     }
 

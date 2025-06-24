@@ -6,6 +6,9 @@ edition.workspace = true
 repository.workspace = true
 license.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 
 [dependencies.rcgen]
@@ -17,5 +20,5 @@ features = [ "crypto", "ring", "x509-parser" ]
 version = "1.12.0"
 default-features = false
 
-[lints]
-workspace = true
+[dependencies.wasmbed-types]
+path = "../wasmbed-types"
