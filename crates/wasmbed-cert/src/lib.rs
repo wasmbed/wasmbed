@@ -7,7 +7,7 @@ use rcgen::{
     BasicConstraints, Certificate, CertificateParams, Error,
     ExtendedKeyUsagePurpose, IsCa, KeyPair, KeyUsagePurpose, PKCS_ED25519,
 };
-use rustls_pki_types::{CertificateDer, PrivateKeyDer};
+use rustls_pki_types::CertificateDer;
 
 pub use rcgen::{DistinguishedName, DnType};
 
@@ -58,11 +58,13 @@ impl Credential {
         })
     }
 
+    /// The key pair serialized in PKCS#8 DER format, including the private key.
     fn key_pair_der(&self) -> &[u8] {
         self.key_pair.serialized_der()
     }
 
-    fn certificate_der(&self) -> &[u8] {
+    /// The X.509 certificate encoded in DER format.
+    fn certificate_der(&self) -> &CertificateDer<'static> {
         self.certificate.der()
     }
 
@@ -72,12 +74,13 @@ impl Credential {
     /// not preserve all original certificate fields exactly. See
     /// [`from_ca_cert_der`](rcgen::CertificateParams::from_ca_cert_der).
     fn from_der(
-        private_key_der: &[u8],
+        key_pair_der: &[u8],
         certificate_der: &[u8],
     ) -> Result<Self, Error> {
-        let private_key = PrivateKeyDer::Pkcs8(private_key_der.into());
-        let key_pair =
-            KeyPair::from_der_and_sign_algo(&private_key, &PKCS_ED25519)?;
+        let key_pair = KeyPair::from_pkcs8_der_and_sign_algo(
+            &key_pair_der.into(),
+            &PKCS_ED25519,
+        )?;
         let certificate_der = CertificateDer::from_slice(certificate_der);
         let certificate_params =
             CertificateParams::from_ca_cert_der(&certificate_der)?;
@@ -119,23 +122,22 @@ impl Authority {
         Ok(Identity(self.0.signed(params)?))
     }
 
+    /// The key pair serialized in PKCS#8 DER format, including the private key.
     fn key_pair_der(&self) -> &[u8] {
         self.0.key_pair_der()
     }
 
-    fn certificate_der(&self) -> &[u8] {
+    /// The X.509 certificate encoded in DER format.
+    fn certificate_der(&self) -> &CertificateDer<'static> {
         self.0.certificate_der()
     }
 
     /// Reconstructs an authority from DER-encoded materials.
     fn from_der(
-        private_key_der: &[u8],
+        key_pair_der: &[u8],
         certificate_der: &[u8],
     ) -> Result<Self, Error> {
-        Ok(Self(Credential::from_der(
-            private_key_der,
-            certificate_der,
-        )?))
+        Ok(Self(Credential::from_der(key_pair_der, certificate_der)?))
     }
 }
 
@@ -160,20 +162,22 @@ impl ServerAuthority {
         )?))
     }
 
+    /// The key pair serialized in PKCS#8 DER format, including the private key.
     pub fn key_pair_der(&self) -> &[u8] {
         self.0.key_pair_der()
     }
 
-    pub fn certificate_der(&self) -> &[u8] {
+    /// The X.509 certificate encoded in DER format.
+    pub fn certificate_der(&self) -> &CertificateDer<'static> {
         self.0.certificate_der()
     }
 
     /// Reconstructs a server authority from DER-encoded materials.
     pub fn from_der(
-        private_key_der: &[u8],
+        key_pair_der: &[u8],
         certificate_der: &[u8],
     ) -> Result<Self, Error> {
-        Ok(Self(Authority::from_der(private_key_der, certificate_der)?))
+        Ok(Self(Authority::from_der(key_pair_der, certificate_der)?))
     }
 }
 
@@ -195,49 +199,57 @@ impl ClientAuthority {
         )?))
     }
 
+    /// The key pair serialized in PKCS#8 DER format, including the private key.
     pub fn key_pair_der(&self) -> &[u8] {
         self.0.key_pair_der()
     }
 
-    pub fn certificate_der(&self) -> &[u8] {
+    /// The X.509 certificate encoded in DER format.
+    pub fn certificate_der(&self) -> &CertificateDer<'static> {
         self.0.certificate_der()
     }
 
     /// Reconstructs a client authority from DER-encoded materials.
     pub fn from_der(
-        private_key_der: &[u8],
+        key_pair_der: &[u8],
         certificate_der: &[u8],
     ) -> Result<Self, Error> {
-        Ok(Self(Authority::from_der(private_key_der, certificate_der)?))
+        Ok(Self(Authority::from_der(key_pair_der, certificate_der)?))
     }
 }
 
 impl Identity {
+    /// The key pair serialized in PKCS#8 DER format, including the private key.
     fn key_pair_der(&self) -> &[u8] {
         self.0.key_pair_der()
     }
 
-    fn certificate_der(&self) -> &[u8] {
+    /// The X.509 certificate encoded in DER format.
+    fn certificate_der(&self) -> &CertificateDer<'static> {
         self.0.certificate_der()
     }
 }
 
 impl ServerIdentity {
+    /// The key pair serialized in PKCS#8 DER format, including the private key.
     pub fn key_pair_der(&self) -> &[u8] {
         self.0.key_pair_der()
     }
 
-    pub fn certificate_der(&self) -> &[u8] {
+    /// The X.509 certificate encoded in DER format.
+    pub fn certificate_der(&self) -> &CertificateDer<'static> {
         self.0.certificate_der()
     }
 }
 
 impl ClientIdentity {
+    /// The key pair serialized in PKCS#8 DER format, including the private key.
     pub fn key_pair_der(&self) -> &[u8] {
         self.0.key_pair_der()
     }
 
-    pub fn certificate_der(&self) -> &[u8] {
+    /// The X.509 certificate encoded in DER format.
+    pub fn certificate_der(&self) -> &CertificateDer<'static> {
         self.0.certificate_der()
     }
 }
