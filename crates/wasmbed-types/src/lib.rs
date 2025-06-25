@@ -40,6 +40,12 @@ pub struct PublicKey<'a>(
     pub Cow<'a, [u8]>,
 );
 
+impl<'a> PublicKey<'a> {
+    pub fn into_owned(self) -> PublicKey<'static> {
+        PublicKey(Cow::Owned(self.0.into_owned()))
+    }
+}
+
 impl<'a> From<Cow<'a, [u8]>> for PublicKey<'a> {
     fn from(cow: Cow<'a, [u8]>) -> Self {
         PublicKey(cow)
@@ -55,5 +61,24 @@ impl<'a> From<&'a [u8]> for PublicKey<'a> {
 impl From<Vec<u8>> for PublicKey<'static> {
     fn from(bytes: Vec<u8>) -> Self {
         Cow::<'static, [u8]>::Owned(bytes).into()
+    }
+}
+
+#[cfg(feature = "cert")]
+impl<'a> TryFrom<&'a rustls_pki_types::CertificateDer<'a>> for PublicKey<'a> {
+    type Error = x509_parser::error::X509Error;
+
+    fn try_from(
+        cert: &'a rustls_pki_types::CertificateDer<'a>,
+    ) -> Result<Self, Self::Error> {
+        use x509_parser::certificate::X509Certificate;
+        use x509_parser::prelude::FromDer;
+
+        let cert_bytes: &'a [u8] = cert.as_ref();
+        let (_, x509): (_, X509Certificate<'a>) =
+            X509Certificate::from_der(cert_bytes)?;
+
+        let spki_raw = x509.tbs_certificate.subject_pki.raw;
+        Ok(spki_raw.into())
     }
 }

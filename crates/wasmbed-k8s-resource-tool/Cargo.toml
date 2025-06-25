@@ -18,12 +18,16 @@ features = [ "derive" ]
 version = "1.1.0"
 default-features = false
 
+[dependencies.rustls-pki-types]
+version = "1.12.0"
+default-features = false
+
 [dependencies.wasmbed-k8s-resource]
 path = "../wasmbed-k8s-resource"
 
 [dependencies.wasmbed-types]
 path = "../wasmbed-types"
-features = [ "k8s" ]
+features = [ "cert" ]
 
 [lints]
 workspace = true

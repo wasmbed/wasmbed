@@ -1,9 +1,9 @@
-use std::borrow::Cow;
 use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use kube::CustomResourceExt;
+use rustls_pki_types::CertificateDer;
 
 use wasmbed_k8s_resource::{Device, DeviceSpec};
 use wasmbed_types::PublicKey;
@@ -38,9 +38,9 @@ enum ManifestResource {
         /// Metadata.name of the resource.
         #[arg(long)]
         name: String,
-        /// Path to the device's public key in DER format.
-        #[arg(long, value_name = "FILE")]
-        public_key: PathBuf,
+        /// Path to the device's certificate in DER format.
+        #[arg(long = "cert", value_name = "FILE")]
+        certificate: PathBuf,
     },
 }
 
@@ -58,19 +58,21 @@ pub fn main() -> Result<()> {
         },
 
         Command::GenerateManifest(resource) => match resource {
-            ManifestResource::Device { name, public_key } => {
-                let pubkey_bytes =
-                    std::fs::read(&public_key).with_context(|| {
+            ManifestResource::Device { name, certificate } => {
+                let cert_bytes =
+                    std::fs::read(&certificate).with_context(|| {
                         format!(
-                            "Failed to read public key from {}",
-                            public_key.display()
+                            "Failed to read certificate from {}",
+                            certificate.display()
                         )
                     })?;
+                let cert = CertificateDer::from_slice(&cert_bytes);
+                let public_key: PublicKey = (&cert).try_into()?;
 
                 let device = Device::new(
                     &name,
                     DeviceSpec {
-                        public_key: PublicKey(Cow::Owned(pubkey_bytes)),
+                        public_key: public_key.into_owned(),
                     },
                 );
 
