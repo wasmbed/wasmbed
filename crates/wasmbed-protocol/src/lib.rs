@@ -32,9 +32,15 @@ pub enum Version {
 }
 
 /// Unique identifier for correlating requests with responses
-#[derive(Debug, Clone, Copy, PartialEq, Decode, Encode)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Decode, Encode)]
 #[cbor(transparent)]
 pub struct MessageId(u32);
+
+impl MessageId {
+    pub fn next(&self) -> Self {
+        Self(self.0.wrapping_add(1))
+    }
+}
 
 /// Messages sent from client to server
 #[derive(Debug, Clone, PartialEq)]

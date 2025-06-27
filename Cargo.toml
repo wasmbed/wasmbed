@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "crates/wasmbed-cert",
     "crates/wasmbed-cert-tool",
+    "crates/wasmbed-k8s-client",
     "crates/wasmbed-k8s-controller",
     "crates/wasmbed-k8s-resource",
     "crates/wasmbed-k8s-resource-tool",

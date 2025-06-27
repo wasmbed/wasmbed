@@ -1,5 +1,5 @@
 [package]
-name = "wasmbed-k8s-resource-tool"
+name = "wasmbed-k8s-client"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
@@ -7,27 +7,23 @@ repository.workspace = true
 license.workspace = true
 
 [dependencies]
-anyhow = "1.0.98"
-serde_yaml = "0.9.34"
 
-[dependencies.clap]
-version = "4.5.40"
-features = [ "derive" ]
+[lints]
+workspace = true
+
+[dependencies.k8s-openapi]
+version = "0.25.0"
+features = [ "v1_32" ]
 
 [dependencies.kube]
 version = "1.1.0"
 default-features = false
-
-[dependencies.rustls-pki-types]
-version = "1.12.0"
-default-features = false
+features = [ "derive" ]
 
 [dependencies.wasmbed-k8s-resource]
 path = "../wasmbed-k8s-resource"
+features = [ "serde", "schemars", "k8s" ]
 
 [dependencies.wasmbed-types]
 path = "../wasmbed-types"
-features = [ "cert" ]
-
-[lints]
-workspace = true
+features = [ "serde", "schemars", "k8s" ]
