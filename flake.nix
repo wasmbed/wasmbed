@@ -134,11 +134,11 @@
       ];
     };
 
-    dockerImages.wasmbed-controller = pkgs.dockerTools.buildLayeredImage {
-      name = "wasmbed-controller";
+    dockerImages.wasmbed-gateway = pkgs.dockerTools.buildLayeredImage {
+      name = "wasmbed-gateway";
       config = {
         Cmd = [
-          "${self.packages.${system}.wasmbed-k8s-controller}/bin/wasmbed-k8s-controller"
+          (lib.meta.getExe self.packages.${system}.wasmbed-gateway)
         ];
       };
     };
