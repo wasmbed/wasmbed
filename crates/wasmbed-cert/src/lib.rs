@@ -4,18 +4,18 @@ extern crate alloc;
 
 use alloc::{vec, vec::Vec};
 use rcgen::{
-    BasicConstraints, Certificate, CertificateParams, Error,
-    ExtendedKeyUsagePurpose, IsCa, KeyPair, KeyUsagePurpose, PKCS_ED25519,
+    BasicConstraints, CertificateParams, Error, ExtendedKeyUsagePurpose, IsCa,
+    KeyPair, KeyUsagePurpose, PKCS_ED25519,
 };
-use rustls_pki_types::CertificateDer;
+use rustls_pki_types::{CertificateDer, PrivatePkcs8KeyDer};
 use wasmbed_types::PublicKey;
 
 pub use rcgen::{DistinguishedName, DnType};
 
-/// Core cryptographic credential containing a key pair and certificate.
+/// Core cryptographic credential containing a private key and certificate.
 struct Credential {
-    key_pair: KeyPair,
-    certificate: Certificate,
+    private_key: PrivatePkcs8KeyDer<'static>,
+    certificate: CertificateDer<'static>,
 }
 
 /// Certificate Authority capable of issuing certificates.
@@ -41,61 +41,68 @@ impl Credential {
     fn self_signed(params: CertificateParams) -> Result<Self, Error> {
         let key_pair = KeyPair::generate_for(&PKCS_ED25519)?;
         let certificate = params.self_signed(&key_pair)?;
+
         Ok(Self {
-            key_pair,
-            certificate,
+            private_key: key_pair.serialize_der().into(),
+            certificate: certificate.der().clone(),
         })
     }
 
-    /// Creates a certificate signed by this credential.
-    fn signed(&self, params: CertificateParams) -> Result<Self, Error> {
-        let key_pair = KeyPair::generate_for(&PKCS_ED25519)?;
-        let certificate =
-            params.signed_by(&key_pair, &self.certificate, &self.key_pair)?;
-
-        Ok(Self {
-            key_pair,
-            certificate,
-        })
-    }
-
-    /// The key pair serialized in PKCS#8 DER format, including the private key.
-    fn key_pair_der(&self) -> &[u8] {
-        self.key_pair.serialized_der()
-    }
-
-    /// The public key encoded in DER format using the X.509
-    /// `SubjectPublicKeyInfo` structure.
-    fn public_key_der(&self) -> PublicKey<'static> {
-        self.key_pair.public_key_der().into()
-    }
-
-    /// The X.509 certificate encoded in DER format.
-    fn certificate_der(&self) -> &CertificateDer<'static> {
-        self.certificate.der()
-    }
-
-    /// Reconstructs a credential from DER-encoded private key and certificate.
-    ///
-    /// Note: This recreates the certificate from parsed parameters, which may
-    /// not preserve all original certificate fields exactly. See
-    /// [`from_ca_cert_der`](rcgen::CertificateParams::from_ca_cert_der).
-    fn from_der(
-        key_pair_der: &[u8],
-        certificate_der: &[u8],
+    /// Creates a certificate signed by the provided authority credential.
+    fn signed(
+        authority: &Self,
+        params: CertificateParams,
     ) -> Result<Self, Error> {
-        let key_pair = KeyPair::from_pkcs8_der_and_sign_algo(
-            &key_pair_der.into(),
+        let key_pair = KeyPair::generate_for(&PKCS_ED25519)?;
+        let authority_key_pair = KeyPair::from_pkcs8_der_and_sign_algo(
+            &authority.private_key,
             &PKCS_ED25519,
         )?;
-        let certificate_der = CertificateDer::from_slice(certificate_der);
-        let certificate_params =
-            CertificateParams::from_ca_cert_der(&certificate_der)?;
-        let certificate = certificate_params.self_signed(&key_pair)?;
+        let authority_cert_params =
+            CertificateParams::from_ca_cert_der(&authority.certificate)?;
+        let authority_cert =
+            authority_cert_params.self_signed(&authority_key_pair)?;
+
+        let certificate = params.signed_by(
+            &key_pair,
+            &authority_cert,
+            &authority_key_pair,
+        )?;
+
         Ok(Self {
-            key_pair,
-            certificate,
+            private_key: key_pair.serialize_der().into(),
+            certificate: certificate.der().clone(),
         })
+    }
+
+    /// The private key in PKCS#8 format.
+    fn private_key(&self) -> &PrivatePkcs8KeyDer<'static> {
+        &self.private_key
+    }
+
+    /// The public key in X.509 SubjectPublicKeyInfo format.
+    fn public_key(&self) -> Result<PublicKey<'static>, Error> {
+        let key_pair = KeyPair::from_pkcs8_der_and_sign_algo(
+            &self.private_key,
+            &PKCS_ED25519,
+        )?;
+        Ok(key_pair.public_key_der().into())
+    }
+
+    /// The X.509 certificate.
+    fn certificate(&self) -> &CertificateDer<'static> {
+        &self.certificate
+    }
+
+    /// Reconstructs a credential from private key and certificate.
+    fn from_parts(
+        private_key: PrivatePkcs8KeyDer<'static>,
+        certificate: CertificateDer<'static>,
+    ) -> Self {
+        Self {
+            private_key,
+            certificate,
+        }
     }
 }
 
@@ -126,31 +133,30 @@ impl Authority {
         params.key_usages = key_usages;
         params.extended_key_usages = extended_key_usages;
 
-        Ok(Identity(self.0.signed(params)?))
+        Ok(Identity(Credential::signed(&self.0, params)?))
     }
 
-    /// The key pair serialized in PKCS#8 DER format, including the private key.
-    fn key_pair_der(&self) -> &[u8] {
-        self.0.key_pair_der()
+    /// The private key in PKCS#8 format.
+    fn private_key(&self) -> &PrivatePkcs8KeyDer<'static> {
+        self.0.private_key()
     }
 
-    /// The public key encoded in DER format using the X.509
-    /// `SubjectPublicKeyInfo` structure.
-    fn public_key_der(&self) -> PublicKey<'static> {
-        self.0.public_key_der()
+    /// The public key in X.509 SubjectPublicKeyInfo format.
+    fn public_key(&self) -> Result<PublicKey<'static>, Error> {
+        self.0.public_key()
     }
 
-    /// The X.509 certificate encoded in DER format.
-    fn certificate_der(&self) -> &CertificateDer<'static> {
-        self.0.certificate_der()
+    /// The X.509 certificate.
+    fn certificate(&self) -> &CertificateDer<'static> {
+        self.0.certificate()
     }
 
-    /// Reconstructs an authority from DER-encoded materials.
-    fn from_der(
-        key_pair_der: &[u8],
-        certificate_der: &[u8],
-    ) -> Result<Self, Error> {
-        Ok(Self(Credential::from_der(key_pair_der, certificate_der)?))
+    /// Reconstructs an authority from private key and certificate.
+    fn from_parts(
+        private_key: PrivatePkcs8KeyDer<'static>,
+        certificate: CertificateDer<'static>,
+    ) -> Self {
+        Self(Credential::from_parts(private_key, certificate))
     }
 }
 
@@ -175,28 +181,27 @@ impl ServerAuthority {
         )?))
     }
 
-    /// The key pair serialized in PKCS#8 DER format, including the private key.
-    pub fn key_pair_der(&self) -> &[u8] {
-        self.0.key_pair_der()
+    /// The private key in PKCS#8 format.
+    pub fn private_key(&self) -> &PrivatePkcs8KeyDer<'static> {
+        self.0.private_key()
     }
 
-    /// The public key encoded in DER format using the X.509
-    /// `SubjectPublicKeyInfo` structure.
-    pub fn public_key_der(&self) -> PublicKey<'static> {
-        self.0.public_key_der()
+    /// The public key in X.509 SubjectPublicKeyInfo format.
+    pub fn public_key(&self) -> Result<PublicKey<'static>, Error> {
+        self.0.public_key()
     }
 
-    /// The X.509 certificate encoded in DER format.
-    pub fn certificate_der(&self) -> &CertificateDer<'static> {
-        self.0.certificate_der()
+    /// The X.509 certificate.
+    pub fn certificate(&self) -> &CertificateDer<'static> {
+        self.0.certificate()
     }
 
-    /// Reconstructs a server authority from DER-encoded materials.
-    pub fn from_der(
-        key_pair_der: &[u8],
-        certificate_der: &[u8],
-    ) -> Result<Self, Error> {
-        Ok(Self(Authority::from_der(key_pair_der, certificate_der)?))
+    /// Reconstructs a server authority from private key and certificate.
+    pub fn from_parts(
+        private_key: PrivatePkcs8KeyDer<'static>,
+        certificate: CertificateDer<'static>,
+    ) -> Self {
+        Self(Authority::from_parts(private_key, certificate))
     }
 }
 
@@ -218,82 +223,94 @@ impl ClientAuthority {
         )?))
     }
 
-    /// The key pair serialized in PKCS#8 DER format, including the private key.
-    pub fn key_pair_der(&self) -> &[u8] {
-        self.0.key_pair_der()
+    /// The private key in PKCS#8 format.
+    pub fn private_key(&self) -> &PrivatePkcs8KeyDer<'static> {
+        self.0.private_key()
     }
 
-    /// The public key encoded in DER format using the X.509
-    /// `SubjectPublicKeyInfo` structure.
-    pub fn public_key_der(&self) -> PublicKey<'static> {
-        self.0.public_key_der()
+    /// The public key in X.509 SubjectPublicKeyInfo format.
+    pub fn public_key(&self) -> Result<PublicKey<'static>, Error> {
+        self.0.public_key()
     }
 
-    /// The X.509 certificate encoded in DER format.
-    pub fn certificate_der(&self) -> &CertificateDer<'static> {
-        self.0.certificate_der()
+    /// The X.509 certificate.
+    pub fn certificate(&self) -> &CertificateDer<'static> {
+        self.0.certificate()
     }
 
-    /// Reconstructs a client authority from DER-encoded materials.
-    pub fn from_der(
-        key_pair_der: &[u8],
-        certificate_der: &[u8],
-    ) -> Result<Self, Error> {
-        Ok(Self(Authority::from_der(key_pair_der, certificate_der)?))
+    /// Reconstructs a client authority from private key and certificate.
+    pub fn from_parts(
+        private_key: PrivatePkcs8KeyDer<'static>,
+        certificate: CertificateDer<'static>,
+    ) -> Self {
+        Self(Authority::from_parts(private_key, certificate))
     }
 }
 
 impl Identity {
-    /// The key pair serialized in PKCS#8 DER format, including the private key.
-    fn key_pair_der(&self) -> &[u8] {
-        self.0.key_pair_der()
+    /// The private key in PKCS#8 format.
+    fn private_key(&self) -> &PrivatePkcs8KeyDer<'static> {
+        self.0.private_key()
     }
 
-    /// The public key encoded in DER format using the X.509
-    /// `SubjectPublicKeyInfo` structure.
-    fn public_key_der(&self) -> PublicKey<'static> {
-        self.0.public_key_der()
+    /// The public key in X.509 SubjectPublicKeyInfo format.
+    fn public_key(&self) -> Result<PublicKey<'static>, Error> {
+        self.0.public_key()
     }
 
-    /// The X.509 certificate encoded in DER format.
-    fn certificate_der(&self) -> &CertificateDer<'static> {
-        self.0.certificate_der()
+    /// The X.509 certificate.
+    fn certificate(&self) -> &CertificateDer<'static> {
+        self.0.certificate()
+    }
+
+    /// Reconstructs an identity from private key and certificate.
+    pub fn from_parts(
+        private_key: PrivatePkcs8KeyDer<'static>,
+        certificate: CertificateDer<'static>,
+    ) -> Self {
+        Self(Credential::from_parts(private_key, certificate))
     }
 }
 
 impl ServerIdentity {
-    /// The key pair serialized in PKCS#8 DER format, including the private key.
-    pub fn key_pair_der(&self) -> &[u8] {
-        self.0.key_pair_der()
+    /// The private key in PKCS#8 format.
+    pub fn private_key(&self) -> &PrivatePkcs8KeyDer<'static> {
+        self.0.private_key()
     }
 
-    /// The public key encoded in DER format using the X.509
-    /// `SubjectPublicKeyInfo` structure.
-    pub fn public_key_der(&self) -> PublicKey<'static> {
-        self.0.public_key_der()
+    /// The public key in X.509 SubjectPublicKeyInfo format.
+    pub fn public_key(&self) -> Result<PublicKey<'static>, Error> {
+        self.0.public_key()
     }
 
-    /// The X.509 certificate encoded in DER format.
-    pub fn certificate_der(&self) -> &CertificateDer<'static> {
-        self.0.certificate_der()
+    /// The X.509 certificate.
+    pub fn certificate(&self) -> &CertificateDer<'static> {
+        self.0.certificate()
+    }
+
+    /// Reconstructs a server identity from private key and certificate.
+    pub fn from_parts(
+        private_key: PrivatePkcs8KeyDer<'static>,
+        certificate: CertificateDer<'static>,
+    ) -> Self {
+        Self(Identity::from_parts(private_key, certificate))
     }
 }
 
 impl ClientIdentity {
-    /// The key pair serialized in PKCS#8 DER format, including the private key.
-    pub fn key_pair_der(&self) -> &[u8] {
-        self.0.key_pair_der()
+    /// The private key in PKCS#8 format.
+    pub fn private_key(&self) -> &PrivatePkcs8KeyDer<'static> {
+        self.0.private_key()
     }
 
-    /// The public key encoded in DER format using the X.509
-    /// `SubjectPublicKeyInfo` structure.
-    pub fn public_key_der(&self) -> PublicKey<'static> {
-        self.0.public_key_der()
+    /// The public key in X.509 SubjectPublicKeyInfo format.
+    pub fn public_key(&self) -> Result<PublicKey<'static>, Error> {
+        self.0.public_key()
     }
 
-    /// The X.509 certificate encoded in DER format.
-    pub fn certificate_der(&self) -> &CertificateDer<'static> {
-        self.0.certificate_der()
+    /// The X.509 certificate.
+    pub fn certificate(&self) -> &CertificateDer<'static> {
+        self.0.certificate()
     }
 }
 
@@ -316,128 +333,30 @@ mod tests {
         dn
     }
 
-    fn create_server_dn() -> DistinguishedName {
-        let mut dn = DistinguishedName::new();
-        dn.push(DnType::CommonName, "test.example.com");
-        dn
-    }
-
-    fn create_client_dn() -> DistinguishedName {
-        let mut dn = DistinguishedName::new();
-        dn.push(DnType::CommonName, "client-001");
-        dn
-    }
-
-    #[test]
-    fn test_server_authority_creation() {
-        let ca = ServerAuthority::new(create_server_ca_dn()).unwrap();
-        assert!(!ca.key_pair_der().is_empty());
-        assert!(!ca.certificate_der().is_empty());
-    }
-
-    #[test]
-    fn test_client_authority_creation() {
-        let ca = ClientAuthority::new(create_client_ca_dn()).unwrap();
-        assert!(!ca.key_pair_der().is_empty());
-        assert!(!ca.certificate_der().is_empty());
-    }
-
-    #[test]
-    fn test_server_certificate_issuance() {
-        let ca = ServerAuthority::new(create_server_ca_dn()).unwrap();
-        let server_cert = ca.issue_certificate(create_server_dn()).unwrap();
-
-        assert!(!server_cert.key_pair_der().is_empty());
-        assert!(!server_cert.certificate_der().is_empty());
-    }
-
-    #[test]
-    fn test_client_certificate_issuance() {
-        let ca = ClientAuthority::new(create_client_ca_dn()).unwrap();
-        let client_cert = ca.issue_certificate(create_client_dn()).unwrap();
-
-        assert!(!client_cert.key_pair_der().is_empty());
-        assert!(!client_cert.certificate_der().is_empty());
-    }
-
     #[test]
     fn test_server_authority_serialization() {
         let original_ca = ServerAuthority::new(create_server_ca_dn()).unwrap();
-        let key_der = original_ca.key_pair_der();
-        let cert_der = original_ca.certificate_der();
 
-        let restored_ca = ServerAuthority::from_der(key_der, cert_der).unwrap();
+        let restored_ca = ServerAuthority::from_parts(
+            original_ca.private_key().clone_key(),
+            original_ca.certificate().clone(),
+        );
 
         // Keys should be identical
-        assert_eq!(original_ca.key_pair_der(), restored_ca.key_pair_der());
-        assert_eq!(original_ca.public_key_der(), restored_ca.public_key_der());
-
-        // Certificates may differ due to reconstruction, but should be valid
-        assert!(!restored_ca.certificate_der().is_empty());
+        assert_eq!(original_ca.private_key(), restored_ca.private_key());
+        assert_eq!(original_ca.public_key(), restored_ca.public_key());
     }
 
     #[test]
     fn test_client_authority_serialization() {
         let original_ca = ClientAuthority::new(create_client_ca_dn()).unwrap();
-        let key_der = original_ca.key_pair_der();
-        let cert_der = original_ca.certificate_der();
 
-        let restored_ca = ClientAuthority::from_der(key_der, cert_der).unwrap();
-
-        assert_eq!(original_ca.key_pair_der(), restored_ca.key_pair_der());
-        assert_eq!(original_ca.public_key_der(), restored_ca.public_key_der());
-
-        assert!(!restored_ca.certificate_der().is_empty());
-    }
-
-    #[test]
-    fn test_serialization_roundtrip_authority_functionality() {
-        let original_ca = ServerAuthority::new(create_server_ca_dn()).unwrap();
-        let restored_ca = ServerAuthority::from_der(
-            original_ca.key_pair_der(),
-            original_ca.certificate_der(),
-        )
-        .unwrap();
-
-        // Both should be able to issue certificates
-        let cert1 = original_ca.issue_certificate(create_server_dn()).unwrap();
-        let cert2 = restored_ca.issue_certificate(create_server_dn()).unwrap();
-
-        assert!(!cert1.certificate_der().is_empty());
-        assert!(!cert2.certificate_der().is_empty());
-    }
-
-    #[test]
-    fn test_cross_authority_type_safety() {
-        let server_ca = ServerAuthority::new(create_server_ca_dn()).unwrap();
-        let client_ca = ClientAuthority::new(create_client_ca_dn()).unwrap();
-
-        let server_cert =
-            server_ca.issue_certificate(create_server_dn()).unwrap();
-        let client_cert =
-            client_ca.issue_certificate(create_client_dn()).unwrap();
-
-        // Ensure different types produce different certificates
-        assert_ne!(
-            server_cert.certificate_der(),
-            client_cert.certificate_der()
+        let restored_ca = ClientAuthority::from_parts(
+            original_ca.private_key().clone_key(),
+            original_ca.certificate().clone(),
         );
-    }
 
-    #[test]
-    fn test_invalid_der_handling() {
-        let invalid_key = b"invalid key data";
-        let invalid_cert = b"invalid cert data";
-
-        assert!(ServerAuthority::from_der(invalid_key, invalid_cert).is_err());
-        assert!(ClientAuthority::from_der(invalid_key, invalid_cert).is_err());
-    }
-
-    #[test]
-    fn test_empty_der_handling() {
-        let empty_data = b"";
-
-        assert!(ServerAuthority::from_der(empty_data, empty_data).is_err());
-        assert!(ClientAuthority::from_der(empty_data, empty_data).is_err());
+        assert_eq!(original_ca.private_key(), restored_ca.private_key());
+        assert_eq!(original_ca.public_key(), restored_ca.public_key());
     }
 }

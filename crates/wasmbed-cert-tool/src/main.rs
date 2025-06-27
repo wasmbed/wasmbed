@@ -129,23 +129,29 @@ fn main() -> Result<()> {
             match kind {
                 CertKind::Server => {
                     let cred = ServerAuthority::new(dn)?;
-                    std::fs::write(out_key, cred.key_pair_der()).with_context(
-                        || format!("failed to write {:?}", out_key),
+                    std::fs::write(
+                        out_key,
+                        cred.private_key().secret_pkcs8_der(),
+                    )
+                    .with_context(|| {
+                        format!("failed to write {:?}", out_key)
+                    })?;
+                    std::fs::write(out_cert, cred.certificate()).with_context(
+                        || format!("failed to write {:?}", out_cert),
                     )?;
-                    std::fs::write(out_cert, cred.certificate_der())
-                        .with_context(|| {
-                            format!("failed to write {:?}", out_cert)
-                        })?;
                 },
                 CertKind::Client => {
                     let cred = ClientAuthority::new(dn)?;
-                    std::fs::write(out_key, cred.key_pair_der()).with_context(
-                        || format!("failed to write {:?}", out_key),
+                    std::fs::write(
+                        out_key,
+                        cred.private_key().secret_pkcs8_der(),
+                    )
+                    .with_context(|| {
+                        format!("failed to write {:?}", out_key)
+                    })?;
+                    std::fs::write(out_cert, cred.certificate()).with_context(
+                        || format!("failed to write {:?}", out_cert),
                     )?;
-                    std::fs::write(out_cert, cred.certificate_der())
-                        .with_context(|| {
-                            format!("failed to write {:?}", out_cert)
-                        })?;
                 },
             }
         },
@@ -168,25 +174,37 @@ fn main() -> Result<()> {
 
             match kind {
                 CertKind::Server => {
-                    let ca = ServerAuthority::from_der(&key_der, &ca_der)?;
+                    let ca = ServerAuthority::from_parts(
+                        key_der.into(),
+                        ca_der.into(),
+                    );
                     let issued = ca.issue_certificate(dn)?;
-                    std::fs::write(out_key, issued.key_pair_der())
-                        .with_context(|| {
-                            format!("failed to write {:?}", out_key)
-                        })?;
-                    std::fs::write(out_cert, issued.certificate_der())
+                    std::fs::write(
+                        out_key,
+                        issued.private_key().secret_pkcs8_der(),
+                    )
+                    .with_context(|| {
+                        format!("failed to write {:?}", out_key)
+                    })?;
+                    std::fs::write(out_cert, issued.certificate())
                         .with_context(|| {
                             format!("failed to write {:?}", out_cert)
                         })?;
                 },
                 CertKind::Client => {
-                    let ca = ClientAuthority::from_der(&key_der, &ca_der)?;
+                    let ca = ClientAuthority::from_parts(
+                        key_der.into(),
+                        ca_der.into(),
+                    );
                     let issued = ca.issue_certificate(dn)?;
-                    std::fs::write(out_key, issued.key_pair_der())
-                        .with_context(|| {
-                            format!("failed to write {:?}", out_key)
-                        })?;
-                    std::fs::write(out_cert, issued.certificate_der())
+                    std::fs::write(
+                        out_key,
+                        issued.private_key().secret_pkcs8_der(),
+                    )
+                    .with_context(|| {
+                        format!("failed to write {:?}", out_key)
+                    })?;
+                    std::fs::write(out_cert, issued.certificate())
                         .with_context(|| {
                             format!("failed to write {:?}", out_cert)
                         })?;
