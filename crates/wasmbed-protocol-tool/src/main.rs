@@ -48,7 +48,7 @@ fn main() -> Result<()> {
             .split_whitespace()
             .map(|s| {
                 s.parse::<u8>()
-                    .context(format!("could not parse decimal value: {}", s))
+                    .context(format!("could not parse decimal value: {s}"))
             })
             .collect::<Result<Vec<u8>>>()?,
         Format::Binary => input.trim().as_bytes().to_vec(),
@@ -58,12 +58,12 @@ fn main() -> Result<()> {
         MessageType::Client => {
             let decoded: ClientEnvelope =
                 decode(&bytes).context("could not decode client envelope")?;
-            println!("{:#?}", decoded);
+            println!("{decoded:#?}");
         },
         MessageType::Server => {
             let decoded: ServerEnvelope =
                 decode(&bytes).context("could not decode server envelope")?;
-            println!("{:#?}", decoded);
+            println!("{decoded:#?}");
         },
     }
 

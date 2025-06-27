@@ -33,6 +33,7 @@ name = "wasmbed"
 
 [workspace.lints.rust]
 arithmetic_overflow = "deny" # Prevent operations that would cause integer overflow
+unnecessary_transmutes = "deny" # Prevent unsafe transmutation
 
 [workspace.lints.clippy]
 # Arithmetic
@@ -64,7 +65,5 @@ serde_api_misuse = "deny" # Prevent incorrect usage of Serde's serialization/des
 uninit_vec = "deny" # Prevent creating uninitialized vectors which is unsafe
 
 # Unsafe code detection
-transmute_int_to_char = "deny" # Prevent unsafe transmutation from integers to characters
-transmute_int_to_float = "deny" # Prevent unsafe transmutation from integers to floats
 transmute_ptr_to_ref = "deny" # Prevent unsafe transmutation from pointers to references
 transmute_undefined_repr = "deny" # Detect transmutes with potentially undefined representations

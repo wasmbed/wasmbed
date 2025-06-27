@@ -292,14 +292,14 @@ async fn client_handler<'a>(
 
                             on_client_message(&ctx);
                         } else {
-                            error!("Client sender not found: {:?}", client_key);
+                            error!("Client sender not found: {client_key:?}");
                             break Err(std::io::Error::other(
-                                format!("Client not found: {:?}", client_key)
+                                format!("Client not found: {client_key:?}")
                             ));
                         }
                     }
                     Err(e) => {
-                        error!("Failed to read envelope: {}", e);
+                        error!("Failed to read envelope: {e}");
                         break Err(e);
                     }
                 }

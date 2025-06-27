@@ -133,11 +133,9 @@ fn main() -> Result<()> {
                         out_key,
                         cred.private_key().secret_pkcs8_der(),
                     )
-                    .with_context(|| {
-                        format!("failed to write {:?}", out_key)
-                    })?;
+                    .with_context(|| format!("failed to write {out_key:?}"))?;
                     std::fs::write(out_cert, cred.certificate()).with_context(
-                        || format!("failed to write {:?}", out_cert),
+                        || format!("failed to write {out_cert:?}"),
                     )?;
                 },
                 CertKind::Client => {
@@ -146,11 +144,9 @@ fn main() -> Result<()> {
                         out_key,
                         cred.private_key().secret_pkcs8_der(),
                     )
-                    .with_context(|| {
-                        format!("failed to write {:?}", out_key)
-                    })?;
+                    .with_context(|| format!("failed to write {out_key:?}"))?;
                     std::fs::write(out_cert, cred.certificate()).with_context(
-                        || format!("failed to write {:?}", out_cert),
+                        || format!("failed to write {out_cert:?}"),
                     )?;
                 },
             }
@@ -165,10 +161,10 @@ fn main() -> Result<()> {
             ..
         } => {
             let ca_der = std::fs::read(ca_cert).with_context(|| {
-                format!("failed to read CA cert from {:?}", ca_cert)
+                format!("failed to read CA cert from {ca_cert:?}")
             })?;
             let key_der = std::fs::read(ca_key).with_context(|| {
-                format!("failed to read CA key from {:?}", ca_key)
+                format!("failed to read CA key from {ca_key:?}")
             })?;
             let dn = build_distinguished_name(&cli.command);
 
@@ -183,12 +179,10 @@ fn main() -> Result<()> {
                         out_key,
                         issued.private_key().secret_pkcs8_der(),
                     )
-                    .with_context(|| {
-                        format!("failed to write {:?}", out_key)
-                    })?;
+                    .with_context(|| format!("failed to write {out_key:?}"))?;
                     std::fs::write(out_cert, issued.certificate())
                         .with_context(|| {
-                            format!("failed to write {:?}", out_cert)
+                            format!("failed to write {out_cert:?}")
                         })?;
                 },
                 CertKind::Client => {
@@ -201,12 +195,10 @@ fn main() -> Result<()> {
                         out_key,
                         issued.private_key().secret_pkcs8_der(),
                     )
-                    .with_context(|| {
-                        format!("failed to write {:?}", out_key)
-                    })?;
+                    .with_context(|| format!("failed to write {out_key:?}"))?;
                     std::fs::write(out_cert, issued.certificate())
                         .with_context(|| {
-                            format!("failed to write {:?}", out_cert)
+                            format!("failed to write {out_cert:?}")
                         })?;
                 },
             }
