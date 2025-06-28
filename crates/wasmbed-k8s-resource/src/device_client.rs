@@ -14,13 +14,8 @@ impl Device {
     ) -> Result<Option<Self>, Error> {
         let serialized_public_key =
             serde_json::to_string(&public_key).map_err(Error::SerdeError)?;
-        let params = ListParams::default().labels_from(
-            &Expression::Equal(
-                "spec.publicKey".to_string(),
-                serialized_public_key,
-            )
-            .into(),
-        );
+        let params = ListParams::default()
+            .fields(&format!("spec.publicKey={}", serialized_public_key));
         let devices = api.list(&params).await?;
         Ok(devices.iter().next().cloned())
     }
