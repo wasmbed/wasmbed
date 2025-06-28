@@ -17,8 +17,17 @@ tracing-subscriber = "0.3.19"
 version = "4.5.40"
 features = [ "derive", "env" ]
 
+[dependencies.kube]
+version = "1.1.0"
+default-features = false
+features = [ "client", "rustls-tls" ]
+
 [dependencies.wasmbed-cert]
 path = "../wasmbed-cert"
+
+[dependencies.wasmbed-k8s-resource]
+path = "../wasmbed-k8s-resource"
+features = [ "client" ]
 
 [dependencies.wasmbed-protocol]
 path = "../wasmbed-protocol"
@@ -28,6 +37,7 @@ path = "../wasmbed-protocol-server"
 
 [dependencies.wasmbed-types]
 path = "../wasmbed-types"
+features = [ "k8s" ]
 
 [dependencies.tokio]
 version = "1.45.1"
