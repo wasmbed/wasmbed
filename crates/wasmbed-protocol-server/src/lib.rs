@@ -29,15 +29,15 @@ const MAX_MESSAGE_SIZE: usize = 16 * 1024 * 1024;
 
 type Clients = Arc<RwLock<HashMap<PublicKey<'static>, Sender>>>;
 type LastMessageId = Arc<RwLock<MessageId>>;
-type OnClientConnect = dyn Send
+pub type OnClientConnect = dyn Send
     + Sync
     + Fn(
         PublicKey<'static>,
     ) -> Pin<Box<dyn Future<Output = AuthorizationResult> + Send>>;
-type OnClientDisconnect = dyn Send
+pub type OnClientDisconnect = dyn Send
     + Sync
     + Fn(PublicKey<'static>) -> Pin<Box<dyn Future<Output = ()> + Send>>;
-type OnClientMessage = dyn Send
+pub type OnClientMessage = dyn Send
     + Sync
     + Fn(MessageContext) -> Pin<Box<dyn Future<Output = ()> + Send>>;
 type Sender = UnboundedSender<ServerEnvelope>;
