@@ -65,17 +65,21 @@ async fn main() -> Result<()> {
         bind_addr: args.bind_addr,
         identity,
         client_ca,
-        on_client_connect: Arc::new(|public_key: &PublicKey| {
-            info!("Client connecting: {:?}", public_key);
-            AuthorizationResult::Authorized
+        on_client_connect: Arc::new(|public_key: PublicKey| {
+            Box::pin(async move {
+                info!("Client connecting: {:?}", public_key);
+                AuthorizationResult::Authorized
+            })
         }),
-        on_client_message: Arc::new(|ctx: &MessageContext| {
-            match ctx.message() {
-                ClientMessage::Heartbeat => {
-                    // FIXME: error handling?
-                    let _ = ctx.reply(ServerMessage::HeartbeatAck);
-                },
-            }
+        on_client_message: Arc::new(|ctx: MessageContext| {
+            Box::pin(async move {
+                match ctx.message() {
+                    ClientMessage::Heartbeat => {
+                        // FIXME: error handling?
+                        let _ = ctx.reply(ServerMessage::HeartbeatAck);
+                    },
+                }
+            })
         }),
         shutdown,
     };
