@@ -1,5 +1,7 @@
 use std::collections::HashMap;
+use std::future::Future;
 use std::net::SocketAddr;
+use std::pin::Pin;
 use std::sync::Arc;
 
 use rustls::{Error as RustlsError, RootCertStore, ServerConfig as RustlsConfig};
@@ -27,8 +29,14 @@ const MAX_MESSAGE_SIZE: usize = 16 * 1024 * 1024;
 
 type Clients = Arc<RwLock<HashMap<PublicKey<'static>, Sender>>>;
 type LastMessageId = Arc<RwLock<MessageId>>;
-type OnClientConnect = dyn Fn(&PublicKey) -> AuthorizationResult + Send + Sync;
-type OnClientMessage = dyn Fn(&MessageContext) + Send + Sync;
+type OnClientConnect = dyn Send
+    + Sync
+    + Fn(
+        PublicKey<'static>,
+    ) -> Pin<Box<dyn Future<Output = AuthorizationResult> + Send>>;
+type OnClientMessage = dyn Send
+    + Sync
+    + Fn(MessageContext) -> Pin<Box<dyn Future<Output = ()> + Send>>;
 type Sender = UnboundedSender<ServerEnvelope>;
 
 pub struct ServerConfig {
@@ -214,7 +222,7 @@ async fn handle_client(
     debug!("Client connected: {:?}", public_key);
 
     if matches!(
-        on_client_connect(&public_key),
+        on_client_connect(public_key.clone()).await,
         AuthorizationResult::Unauthorized
     ) {
         warn!("Client authorization failed: {:?}", public_key);
@@ -289,7 +297,7 @@ async fn client_handler<'a>(
                                 sender,
                             };
 
-                            on_client_message(&ctx);
+                            on_client_message(ctx).await;
                         } else {
                             error!("Client sender not found: {client_key:?}");
                             break Err(std::io::Error::other(
