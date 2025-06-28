@@ -34,6 +34,9 @@ type OnClientConnect = dyn Send
     + Fn(
         PublicKey<'static>,
     ) -> Pin<Box<dyn Future<Output = AuthorizationResult> + Send>>;
+type OnClientDisconnect = dyn Send
+    + Sync
+    + Fn(PublicKey<'static>) -> Pin<Box<dyn Future<Output = ()> + Send>>;
 type OnClientMessage = dyn Send
     + Sync
     + Fn(MessageContext) -> Pin<Box<dyn Future<Output = ()> + Send>>;
@@ -44,6 +47,7 @@ pub struct ServerConfig {
     pub identity: ServerIdentity,
     pub client_ca: CertificateDer<'static>,
     pub on_client_connect: Arc<OnClientConnect>,
+    pub on_client_disconnect: Arc<OnClientDisconnect>,
     pub on_client_message: Arc<OnClientMessage>,
     pub shutdown: CancellationToken,
 }
@@ -113,6 +117,7 @@ impl Server {
                             let acceptor = Arc::clone(&acceptor);
                             let clients = Arc::clone(&self.clients);
                             let on_client_connect = Arc::clone(&self.config.on_client_connect);
+                            let on_client_disconnect = Arc::clone(&self.config.on_client_disconnect);
                             let on_client_message = Arc::clone(&self.config.on_client_message);
                             tokio::spawn(async move {
                                 if let Err(e) = handle_client(
@@ -120,6 +125,7 @@ impl Server {
                                     acceptor,
                                     clients,
                                     &*on_client_connect,
+                                    &*on_client_disconnect,
                                     &*on_client_message,
                                 ).await {
                                     error!("Client handler error: {}", e);
@@ -207,6 +213,7 @@ async fn handle_client(
     acceptor: Arc<TlsAcceptor>,
     clients: Clients,
     on_client_connect: &OnClientConnect,
+    on_client_disconnect: &OnClientDisconnect,
     on_client_message: &OnClientMessage,
 ) -> std::io::Result<()> {
     let tls_stream = acceptor.accept(stream).await?;
@@ -245,6 +252,7 @@ async fn handle_client(
 
     unregister_client(&clients, &public_key).await;
     info!("Client disconnected: {:?}", public_key);
+    on_client_disconnect(public_key.clone()).await;
 
     result
 }

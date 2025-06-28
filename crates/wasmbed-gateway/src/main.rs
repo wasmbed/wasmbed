@@ -71,6 +71,11 @@ async fn main() -> Result<()> {
                 AuthorizationResult::Authorized
             })
         }),
+        on_client_disconnect: Arc::new(|public_key: PublicKey| {
+            Box::pin(async move {
+                info!("Client disconnecting: {:?}", public_key);
+            })
+        }),
         on_client_message: Arc::new(|ctx: MessageContext| {
             Box::pin(async move {
                 match ctx.message() {
