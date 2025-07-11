@@ -3,7 +3,7 @@ pub(crate) mod spki_der {
     use rustls_pki_types::SubjectPublicKeyInfoDer;
     use serde::{Serializer, Deserializer, Deserialize};
     use serde::de::Error;
-    use base64::{engine::general_purpose::STANDARD, Engine};
+    use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 
     pub fn serialize<S>(
         spki: &SubjectPublicKeyInfoDer,
@@ -12,7 +12,7 @@ pub(crate) mod spki_der {
     where
         S: Serializer,
     {
-        let encoded = STANDARD.encode(spki.as_ref());
+        let encoded = URL_SAFE_NO_PAD.encode(spki.as_ref());
         serializer.serialize_str(&encoded)
     }
 
@@ -23,7 +23,7 @@ pub(crate) mod spki_der {
         D: Deserializer<'de>,
     {
         let s: &str = Deserialize::deserialize(deserializer)?;
-        let decoded = STANDARD.decode(s).map_err(D::Error::custom)?;
+        let decoded = URL_SAFE_NO_PAD.decode(s).map_err(D::Error::custom)?;
         Ok(decoded.into())
     }
 }
