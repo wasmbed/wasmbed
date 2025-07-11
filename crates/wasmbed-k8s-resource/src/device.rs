@@ -16,10 +16,12 @@ use wasmbed_types::{GatewayReference, PublicKey};
     CustomResource,
 )]
 #[kube(
+    namespaced,
     group = "wasmbed.github.io",
     version = "v0",
     kind = "Device",
-    namespaced
+    status = "DeviceStatus",
+    selectable = ".spec.publicKey"
 )]
 #[serde(rename_all = "camelCase")]
 pub struct DeviceSpec {
