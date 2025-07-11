@@ -190,9 +190,8 @@ fn extract_client_public_key(
     tls_stream: &TlsStream<TcpStream>,
 ) -> Option<PublicKey<'static>> {
     let (_, session) = tls_stream.get_ref();
-    let peer_certs = session.peer_certificates()?;
-    let client_cert = peer_certs.first()?;
-    Some(PublicKey::from(client_cert.as_ref()).into_owned())
+    let client_cert = session.peer_certificates()?.first()?;
+    Some(PublicKey::try_from(client_cert).ok()?.into_owned())
 }
 
 async fn handle_client(
