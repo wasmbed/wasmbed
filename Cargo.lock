@@ -2500,6 +2500,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "wasmbed-gateway-test-client"
+version = "0.0.1"
+dependencies = [
+ "anyhow",
+ "clap",
+ "rustls",
+ "rustls-pki-types",
+ "tokio",
+ "tokio-rustls",
+ "wasmbed-cert",
+ "wasmbed-types",
+]
+
+[[package]]
 name = "wasmbed-k8s-controller"
 version = "0.0.1"
 
