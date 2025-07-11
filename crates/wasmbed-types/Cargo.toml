@@ -27,7 +27,7 @@ optional = true
 [dependencies.k8s-openapi]
 version = "0.25.0"
 default-features = false
-features = [ "schemars", "v1_32" ]
+features = [ "schemars", "v1_33" ]
 optional = true
 
 [dependencies.rustls-pki-types]

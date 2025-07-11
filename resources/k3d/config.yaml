@@ -5,7 +5,8 @@ metadata:
   name: wasmbed
 
 servers: 1
-agents: 1
+
+image: rancher/k3s:v1.33.2-k3s1
 
 options:
   k3d:
