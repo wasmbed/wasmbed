@@ -50,7 +50,6 @@ impl Callbacks {
             let api = api.clone();
             let gateway_reference = gateway_reference.clone();
             Box::pin(async move {
-                info!("Client connecting: {:?}", public_key);
                 match Device::find(api.clone(), public_key).await {
                     Ok(Some(device)) => {
                         if let Err(e) = DeviceStatusUpdate::default()
@@ -73,11 +72,7 @@ impl Callbacks {
     }
 
     fn on_disconnect(&self) -> Box<OnClientDisconnect> {
-        Box::new(move |public_key: PublicKey<'static>| {
-            Box::pin(async move {
-                info!("Client disconnecting: {:?}", public_key);
-            })
-        })
+        Box::new(move |_public_key: PublicKey<'static>| Box::pin(async move {}))
     }
 
     fn on_message(&self) -> Box<OnClientMessage> {

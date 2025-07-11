@@ -226,7 +226,7 @@ async fn handle_client(
             )
         })?;
 
-    debug!("Client connected: {:?}", public_key);
+    info!("Client connected: {}", public_key);
 
     if matches!(
         on_client_connect(public_key.clone()).await,
@@ -236,7 +236,7 @@ async fn handle_client(
         return Ok(());
     }
 
-    info!("Client authorized: {:?}", public_key);
+    info!("Client authorized: {}", public_key);
 
     let (tx, rx) = unbounded_channel::<ServerEnvelope>();
     register_client(&clients, &public_key, tx.clone()).await;
@@ -251,7 +251,7 @@ async fn handle_client(
     .await;
 
     unregister_client(&clients, &public_key).await;
-    info!("Client disconnected: {:?}", public_key);
+    info!("Client disconnected: {}", public_key);
     on_client_disconnect(public_key.clone()).await;
 
     result

@@ -6,6 +6,9 @@ edition.workspace = true
 repository.workspace = true
 license.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 anyhow = "1.0.98"
 
@@ -15,6 +18,3 @@ features = [ "derive" ]
 
 [dependencies.wasmbed-cert]
 path = "../wasmbed-cert"
-
-[lints]
-workspace = true

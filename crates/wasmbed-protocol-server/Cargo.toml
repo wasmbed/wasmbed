@@ -43,3 +43,4 @@ path = "../wasmbed-protocol"
 
 [dependencies.wasmbed-types]
 path = "../wasmbed-types"
+features = [ "base64", "cert", "x509" ]

@@ -12,15 +12,8 @@ impl Device {
         api: Api<Device>,
         public_key: PublicKey<'_>,
     ) -> Result<Option<Self>, Error> {
-        let serialized_public_key = serde_json::to_value(&public_key)
-            .map_err(Error::SerdeError)?
-            .as_str()
-            .ok_or(Error::SerdeError(serde::de::Error::custom(
-                "Can't convert PubklicKey to string",
-            )))?
-            .to_owned();
         let expr =
-            Expression::Equal("spec.publicKey".into(), serialized_public_key);
+            Expression::Equal("spec.publicKey".into(), public_key.to_base64());
         let params = ListParams::default().fields(&expr.to_string());
         let devices = api.list(&params).await?;
         Ok(devices.iter().next().cloned())

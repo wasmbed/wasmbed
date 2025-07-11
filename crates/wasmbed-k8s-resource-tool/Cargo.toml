@@ -6,6 +6,9 @@ edition.workspace = true
 repository.workspace = true
 license.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 anyhow = "1.0.98"
 serde_yaml = "0.9.34"
@@ -27,7 +30,4 @@ path = "../wasmbed-k8s-resource"
 
 [dependencies.wasmbed-types]
 path = "../wasmbed-types"
-features = [ "cert" ]
-
-[lints]
-workspace = true
+features = [ "cert", "x509" ]
