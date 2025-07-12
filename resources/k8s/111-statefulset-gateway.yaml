@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: wasmbed-gateway
+  namespace: wasmbed
+spec:
+  serviceName: wasmbed-gateway-service
+  replicas: 3
+  selector:
+    matchLabels:
+      app: wasmbed-gateway
+  template:
+    metadata:
+      labels:
+        app: wasmbed-gateway
+    spec:
+      serviceAccountName: wasmbed-gateway
+      containers:
+        - name: wasmbed-gateway
+          image: wasmbed-gateway:mk1zndvpsjkmxkrcwx7r74wdc0jmljb8
+          ports:
+            - containerPort: 4423
+              name: wasmbed-gateway
+          volumeMounts:
+            - name: wasmbed-certs
+              mountPath: /etc/wasmbed-gateway/certs
+          env:
+            - name: WASMBED_GATEWAY_BIND_ADDR
+              value: 0.0.0.0:4423
+            - name: WASMBED_GATEWAY_PRIVATE_KEY
+              value: /etc/wasmbed-gateway/certs/server-0.key
+            - name: WASMBED_GATEWAY_CERTIFICATE
+              value: /etc/wasmbed-gateway/certs/server-0.der
+            - name: WASMBED_GATEWAY_CLIENT_CA
+              value: /etc/wasmbed-gateway/certs/client-ca.der
+            - name: WASMBED_GATEWAY_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: WASMBED_GATEWAY_POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: WASMBED_GATEWAY_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+      volumes:
+        - name: wasmbed-certs
+          hostPath:
+            path: /usr/share/wasmbed/resources/dev-certs

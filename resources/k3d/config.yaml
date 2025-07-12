@@ -8,6 +8,12 @@ servers: 1
 
 image: rancher/k3s:v1.33.2-k3s1
 
+volumes:
+  - volume: /path/to/resources/dev-certs:/usr/share/wasmbed/resources/dev-certs
+    nodeFilters:
+      - server:*
+      - agent:*
+
 options:
   k3d:
     wait: true

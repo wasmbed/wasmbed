@@ -12,6 +12,9 @@ system.
 
 ## Managing the Test Cluster
 
+Due to a [limitation of k3d][k3d-relative-path-issue], you have to manually
+adapt the config changing the absolute path to the resources/dev-certs directoy.
+
 Create and start the cluster using the custom configuration:
 
 ```
@@ -37,6 +40,8 @@ To completely remove the cluster:
 ```
 k3d cluster delete wasmbed
 ```
+
+[k3d-relarive-path-issue]: https://github.com/k3d-io/k3d/issues/1289
 
 ## Configuring kubectl
 
