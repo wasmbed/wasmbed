@@ -130,6 +130,10 @@ maintainer will review your changes and provide feedback or approval.
 
 Please refer to [resources/k3d/README.md](resources/k3d/README.md).
 
+## Cloud Deployment
+
+Please refer to [resources/k8s/README.md](resources/k8s/README.md).
+
 ## Generating Diagrams from PlantUML Files
 
 Please refer to [resources/diagrams/README.md](resources/diagrams/README.md).

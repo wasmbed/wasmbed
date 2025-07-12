@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: wasmbed-gateway-service
+  namespace: wasmbed
+spec:
+  type: NodePort
+  ports:
+    - port: 4423
+      targetPort: 4423
+      nodePort: 30423
+      protocol: TCP
+  selector:
+    app: wasmbed-gateway
