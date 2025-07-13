@@ -63,3 +63,11 @@ kubectl cluster-info
 
 Note that this setting only applies to your current terminal session. You'll
 need to run the export command again if you open a new terminal window or tab.
+
+## License
+
+The configuration files in this directory are released under the [MIT No
+Attribution License (MIT-0)][mit-0]. You may freely use, modify, and distribute
+them without restriction.
+
+[mit-0]: https://spdx.org/licenses/MIT-0.html

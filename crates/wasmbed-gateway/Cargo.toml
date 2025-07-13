@@ -1,10 +1,13 @@
 [package]
 name = "wasmbed-gateway"
 version.workspace = true
-authors.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 repository.workspace = true
 license.workspace = true
+
+[lints]
+workspace = true
 
 [dependencies]
 anyhow = "1.0.98"
@@ -42,6 +45,3 @@ features = [ "k8s" ]
 [dependencies.tokio]
 version = "1.45.1"
 features = [ "rt-multi-thread", "signal" ]
-
-[lints]
-workspace = true

@@ -1,8 +1,8 @@
 [package]
 name = "wasmbed-firmware-hifive1-qemu"
 version.workspace = true
-authors.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 repository.workspace = true
 license.workspace = true
 

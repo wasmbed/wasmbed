@@ -64,21 +64,20 @@ cargo run -p <tool-package-name> -- <args>
 To ensure code quality and maintainability, please follow these guidelines when
 contributing to the project.
 
-### Code Requirements
+### Contributor Acknowledgment
 
-* Editor Configuration: Your editor should respect the settings defined in the
-  `.editorconfig` file to maintain consistent formatting across the codebase.
-* Unit Testing: All code contributions must include appropriate unit tests
-  that verify functionality.
-* Test Verification: Before committing changes, ensure all tests pass by
-  running `cargo test` and `cargo test -- --ignored`.
-* Code Formatting: All code must be formatted using `rustfmt`. Run
-  `cargo fmt` to apply formatting.
-* Code Linting: Code must pass Clippy's linting checks. Run `cargo clippy`
-  to verify.
+All contributors must add their name, email, and GitHub username to the
+[CONTRIBUTORS][contributors] file, in alphabetical order by last name. This
+helps us acknowledge contributions transparently and attribute code authorship
+clearly.
 
-Alternatively, you can run `nix flake check` to perform all the above checks at
-once (ignored end-to-end tests are not run).
+Example:
+
+```
+- Jane Doe <jane@example.com> (GitHub: @janedoe)
+```
+
+[contributors]: CONTRIBUTORS
 
 ### Commit Messages
 
@@ -126,6 +125,22 @@ When creating a branch, use the following naming convention:
 Once your branch is ready, open a pull request targeting the `master` branch. A
 maintainer will review your changes and provide feedback or approval.
 
+### Code Requirements
+
+* Editor Configuration: Your editor should respect the settings defined in the
+  `.editorconfig` file to maintain consistent formatting across the codebase.
+* Unit Testing: All code contributions must include appropriate unit tests
+  that verify functionality.
+* Test Verification: Before committing changes, ensure all tests pass by
+  running `cargo test` and `cargo test -- --ignored`.
+* Code Formatting: All code must be formatted using `rustfmt`. Run
+  `cargo fmt` to apply formatting.
+* Code Linting: Code must pass Clippy's linting checks. Run `cargo clippy`
+  to verify.
+
+Alternatively, you can run `nix flake check` to perform all the above checks at
+once (ignored end-to-end tests are not run).
+
 ## Kubernetes Test Environment
 
 Please refer to [resources/k3d/README.md](resources/k3d/README.md).
@@ -137,3 +152,32 @@ Please refer to [resources/k8s/README.md](resources/k8s/README.md).
 ## Generating Diagrams from PlantUML Files
 
 Please refer to [resources/diagrams/README.md](resources/diagrams/README.md).
+
+## License
+
+This project is licensed under the [GNU Affero General Public License
+v3.0][agpl-3.0]. See the [LICENSE][license] file for the full text.
+
+This project uses the AGPL to ensure that improvements and modifications made in
+networked or cloud environments are shared with the community. If you would like
+to use this software under different licensing terms, please contact us.
+
+[agpl-3.0]: https://www.gnu.org/licenses/agpl-3.0.html
+[license]: LICENSE
+
+### Resources Licensing
+
+- Diagrams in [resources/diagrams][res-diagrams] are licensed under the [Creative
+  Commons Attribution 4.0 International License (CC BY 4.0)][cc-by-4.0].
+- Kubernetes and k3d configuration files in [resources/k8s][res-k8s] and
+  [resources/k3d][res-k3d] are licensed under the [MIT No Attribution License
+  (MIT-0)][mit-0].
+- Development-only certificates in [resources/dev-certs][res-dev-certs] are
+  intended for development and testing only and are not subject to copyright.
+
+[res-diagrams]: resources/diagrams
+[cc-by-4.0]: https://creativecommons.org/licenses/by/4.0
+[res-k8s]: resources/k8s
+[res-k3d]: resources/k3d
+[mit-0]: https://spdx.org/licenses/MIT-0.html
+[res-dev-certs]: resources/dev-certs

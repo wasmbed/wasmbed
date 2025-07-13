@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0
+// Copyright © 2025 Wasmbed contributors
+
 #![no_std]
 
 #[cfg(feature = "alloc")]

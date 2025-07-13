@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT-0
+
 apiVersion: k3d.io/v1alpha5
 kind: Simple
 

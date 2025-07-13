@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT-0
+
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:

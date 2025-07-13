@@ -18,16 +18,10 @@ members = [
 
 [workspace.package]
 version = "0.0.1"
-authors = [ "Tancredi Orlando <tancredi.orlando@gmail.com>" ]
 edition = "2024"
+rust-version = "1.88.0"
 repository = "https://github.com/turlando/wasmed"
 license = "AGPL-3.0"
-
-[profile.dev]
-panic = "abort"
-
-[profile.release]
-panic = "abort"
 
 [workspace.metadata.crane]
 name = "wasmbed"
@@ -68,3 +62,9 @@ uninit_vec = "deny" # Prevent creating uninitialized vectors which is unsafe
 # Unsafe code detection
 transmute_ptr_to_ref = "deny" # Prevent unsafe transmutation from pointers to references
 transmute_undefined_repr = "deny" # Detect transmutes with potentially undefined representations
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"

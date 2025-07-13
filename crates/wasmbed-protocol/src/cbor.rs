@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0
+// Copyright © 2025 Wasmbed contributors
+
 use derive_more::{Display, Error};
 use minicbor::{Decode, Decoder, Encode, Encoder};
 use minicbor::encode::{Error as EncodeError, Write};

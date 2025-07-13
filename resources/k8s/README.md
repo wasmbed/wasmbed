@@ -101,3 +101,11 @@ cargo run -p wasmbed-gateway-test-client --      \
   --private-key resources/dev-certs/client-0.key \
   --certificate resources/dev-certs/client-0.der
 ```
+
+## License
+
+The configuration files in this directory are released under the [MIT No
+Attribution License (MIT-0)][mit-0]. You may freely use, modify, and distribute
+them without restriction.
+
+[mit-0]: https://spdx.org/licenses/MIT-0.html

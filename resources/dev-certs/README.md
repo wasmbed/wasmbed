@@ -70,3 +70,8 @@ cargo run -p wasmbed-cert-tool --             \
   --out-key resources/dev-certs/client-0.key  \
   --out-cert resources/dev-certs/client-0.der
 ```
+
+## License
+
+These certificates are intended for development and testing purposes only. They
+are not subject to copyright and may be freely used, modified, or regenerated.

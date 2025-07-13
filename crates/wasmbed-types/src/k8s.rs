@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0
+// Copyright © 2025 Wasmbed contributors
+
 use alloc::borrow::ToOwned;
 use alloc::string::ToString;
 
