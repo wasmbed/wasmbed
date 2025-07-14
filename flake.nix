@@ -4,6 +4,7 @@
     flake-utils.url = "github:numtide/flake-utils";
     rust-overlay.url = "github:oxalica/rust-overlay";
     crane.url = "github:ipetkov/crane";
+    qemu-espressif.url = "github:SFrijters/nix-qemu-espressif";
   };
 
   outputs = {
@@ -12,12 +13,15 @@
     flake-utils,
     rust-overlay,
     crane,
+    qemu-espressif,
   }:
   flake-utils.lib.eachDefaultSystem (system: let
     inherit (nixpkgs) lib;
 
     overlays = [ (import rust-overlay) ];
     pkgs = import nixpkgs { inherit system overlays; };
+    packages = self.packages.${system};
+    qemu-espressif-pkgs = qemu-espressif.packages.${system};
 
     mkToolchain = p: p.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
     craneLib = (crane.mkLib pkgs).overrideToolchain mkToolchain;
@@ -123,14 +127,22 @@
       };
 
     devShells.default = craneLib.devShell {
-      packages = [
+      packages = let
+        qemu-system-esp32c3-drv = (qemu-espressif-pkgs.qemu-esp32c3.override {
+          enableTests = false;
+        });
+        qemu-system-esp32c3 = (pkgs.writeShellScriptBin "qemu-system-esp32c3" ''
+          ${lib.meta.getExe qemu-system-esp32c3-drv} "$@"
+        '');
+      in [
         pkgs.gnumake
         pkgs.k3d
         pkgs.kubectl
         pkgs.plantuml
         pkgs.qemu
         pkgs.socat
-        self.packages.${system}.defmt-print
+        packages.defmt-print
+        qemu-system-esp32c3
       ];
     };
 
