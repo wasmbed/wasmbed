@@ -8,5 +8,6 @@ components = [
     "rustfmt",
 ]
 targets = [
-    "riscv32imac-unknown-none-elf"
+    "riscv32imc-unknown-none-elf",
+    "riscv32imac-unknown-none-elf",
 ]

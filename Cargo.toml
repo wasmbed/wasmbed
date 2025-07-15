@@ -4,6 +4,7 @@ members = [
     "crates/wasmbed-cert",
     "crates/wasmbed-cert-tool",
     "crates/wasmbed-firmware-hifive1-qemu",
+    "crates/wasmbed-firmware-esp32c3-qemu",
     "crates/wasmbed-gateway",
     "crates/wasmbed-gateway-test-client",
     "crates/wasmbed-k8s-controller",

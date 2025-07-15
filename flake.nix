@@ -127,7 +127,14 @@
       };
 
     devShells.default = craneLib.devShell {
-      packages = [
+      packages = let
+        qemu-system-esp32c3-drv = (qemu-espressif-pkgs.qemu-esp32c3.override {
+          enableTests = false;
+        });
+        qemu-system-esp32c3 = (pkgs.writeShellScriptBin "qemu-system-esp32c3" ''
+          ${lib.meta.getExe qemu-system-esp32c3-drv} "$@"
+        '');
+      in [
         pkgs.gnumake
         pkgs.k3d
         pkgs.kubectl
@@ -135,16 +142,8 @@
         pkgs.qemu
         pkgs.socat
         packages.defmt-print
+        qemu-system-esp32c3
       ];
-
-      shellHook =
-        let
-          qemu-esp32c3 = (qemu-espressif-pkgs.qemu-esp32c3.override {
-            enableTests = false;
-          });
-        in ''
-          alias qemu-system-esp32c3=${lib.meta.getExe qemu-esp32c3}
-        '';
     };
 
     dockerImages.wasmbed-gateway = pkgs.dockerTools.buildLayeredImage {
