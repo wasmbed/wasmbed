@@ -48,8 +48,6 @@ async fn main(spawner: Spawner) {
 
     esp_hal_embassy::init(timg1.timer0);
 
-    esp_println::println!(">>> Hello from esp_println");
-
     let (tx_pin, rx_pin) = (peripherals.GPIO21, peripherals.GPIO20);
 
     let config = esp_hal::uart::Config::default()
@@ -69,13 +67,13 @@ async fn main(spawner: Spawner) {
 
     embassy_time::Timer::after_secs(5).await;
 
-    esp_println::println!("Initializing the firmware..");
+    info!("Firmware initialized");
 
     let mut rng = Rng::new(peripherals.RNG);
 
-    let _seed = (rng.random() as u64) << 32 | rng.random() as u64;
+    let seed = (rng.random() as u64) << 32 | rng.random() as u64;
 
-    info!("Using random seed");
+    info!("Using random seed {=u64}", seed);
 
     let _stack_resources: &'static mut _ = STACK_RESOURCES.init(StackResources::new());
 
