@@ -7,7 +7,6 @@ use defmt_serial as _;
 use defmt::info;
 use defmt::debug;
 
-
 use embassy_executor::Spawner;
 use esp_hal::timer::timg::TimerGroup;
 use esp_hal::rng::Rng;
@@ -39,7 +38,6 @@ esp_bootloader_esp_idf::esp_app_desc!();
 
 #[esp_hal_embassy::main]
 async fn main(spawner: Spawner) {
-
     let peripherals = esp_hal::init(esp_hal::Config::default());
 
     heap_allocator!(size: HEAP_MEMORY_SIZE);
@@ -50,8 +48,9 @@ async fn main(spawner: Spawner) {
 
     let (tx_pin, rx_pin) = (peripherals.GPIO21, peripherals.GPIO20);
 
-    let config = esp_hal::uart::Config::default()
-        .with_rx(RxConfig::default().with_fifo_full_threshold(READ_BUF_SIZE as u16));
+    let config = esp_hal::uart::Config::default().with_rx(
+        RxConfig::default().with_fifo_full_threshold(READ_BUF_SIZE as u16),
+    );
 
     let mut uart0 = Uart::new(peripherals.UART0, config)
         .unwrap()
@@ -63,7 +62,7 @@ async fn main(spawner: Spawner) {
 
     let uart: &'static mut _ = SERIAL.init(uart0);
 
-    defmt_serial::defmt_serial(uart);    
+    defmt_serial::defmt_serial(uart);
 
     embassy_time::Timer::after_secs(5).await;
 
@@ -75,7 +74,8 @@ async fn main(spawner: Spawner) {
 
     info!("Using random seed {=u64}", seed);
 
-    let _stack_resources: &'static mut _ = STACK_RESOURCES.init(StackResources::new());
+    let _stack_resources: &'static mut _ =
+        STACK_RESOURCES.init(StackResources::new());
 
     info!("Initialized stack resources");
 
