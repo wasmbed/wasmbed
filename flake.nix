@@ -21,6 +21,7 @@
 
     mkToolchain = p: p.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
     craneLib = (crane.mkLib pkgs).overrideToolchain mkToolchain;
+    rustfmt = pkgs.rust-bin.selectLatestNightlyWith (toolchain: toolchain.rustfmt);
 
     crates = directories ./crates;
     src = craneLib.cleanCargoSource ./.;
@@ -130,6 +131,7 @@
         pkgs.plantuml
         pkgs.qemu
         pkgs.socat
+        rustfmt
         self.packages.${system}.defmt-print
       ];
     };
