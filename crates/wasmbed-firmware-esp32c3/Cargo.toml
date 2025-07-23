@@ -1,0 +1,47 @@
+
+[package]
+name = "wasmbed-firmware-esp32c3"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "wasmbed-firmware-esp32c3"
+test = true
+
+[dependencies]
+embassy-executor = { version = "0.7", features = ["task-arena-size-81920"] }
+embassy-sync = { version = "0.6", default-features = false }
+embassy-time = { version = "0.4", default-features = false }
+embassy-net = { version = "0.6", features = ["dhcpv4", "dns", "tcp", "udp"] }
+
+embedded-hal-async  = "1.0.0"
+embedded-io         = { version = "0.6.1", default-features = false }
+embedded-io-async   = "0.6.1"
+
+# ESP specifics
+esp-hal = { version = "1.0.0-beta.0", features = ["esp32c3", "unstable", "log-04"]}
+esp-hal-embassy = { version = "0.8", features = ["esp32c3", "executors"]}
+esp-backtrace = { version = "0.16", features = ["esp32c3", "panic-handler", "exception-handler", "println"] }
+esp-println = { version = "0.14.0"}
+esp-bootloader-esp-idf = { version = "0.1.0"}
+esp-alloc = { version = "0.8.0", default-features = false }
+esp-wifi = { version = "0.14.1", features = ["esp32c3", "wifi", "esp-alloc", "builtin-scheduler"] }
+
+
+defmt = "0.3.0"
+defmt-serial = "0.10.0"
+defmt-rtt = "0.4"
+panic-halt = "1.0.0"
+riscv = "0.13.0"
+static_cell = "2.1.0"
+heapless = { version = "0.8", default-features = false }
+log = { version = "0.4", default-features = false}
+
+[dependencies.wasmbed-protocol-client]
+path = "../wasmbed-protocol-client"

@@ -66,7 +66,7 @@ async fn main(spawner: Spawner) {
 
     embassy_time::Timer::after_secs(5).await;
 
-    info!("Firmware initialized");
+    esp_println::println!("Firmware initialized");
 
     let mut rng = Rng::new(peripherals.RNG);
 
