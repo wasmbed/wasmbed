@@ -36,9 +36,11 @@ use wasmbed_protocol_client::{Client};
 
 static STACK_RESOURCES: StaticCell<StackResources<3>> = StaticCell::new();
 
-static WIFI_CONTROLLER: StaticCell<EspWifiController<'static>> = StaticCell::new();
+static WIFI_CONTROLLER: StaticCell<EspWifiController<'static>> =
+    StaticCell::new();
 
-pub static STOP_WIFI_SIGNAL: Signal<CriticalSectionRawMutex, ()> = Signal::new();
+pub static STOP_WIFI_SIGNAL: Signal<CriticalSectionRawMutex, ()> =
+    Signal::new();
 
 const HEAP_MEMORY_SIZE: usize = 72 * 1024;
 
@@ -56,33 +58,40 @@ async fn run(mut runner: Runner<'static, WifiDevice<'static>>) {
 
 #[embassy_executor::task]
 async fn wifi_connection(mut controller: WifiController<'static>) {
-   
     loop {
         let is_started = match controller.is_started() {
             Ok(started) => started,
             Err(e) => {
-                esp_println::println!("Error checking Wi-Fi controller status: {e:?}");
+                esp_println::println!(
+                    "Error checking Wi-Fi controller status: {e:?}"
+                );
                 false
-            }
+            },
         };
         if !is_started {
-            let cfg = Configuration::Client(ClientConfiguration { 
+            let cfg = Configuration::Client(ClientConfiguration {
                 ssid: SSID.into(),
                 password: PASSWORD.into(),
                 ..Default::default()
             });
             if let Err(e) = controller.set_configuration(&cfg) {
-                esp_println::println!("Error setting Wi-Fi configuration: {e:?}");
+                esp_println::println!(
+                    "Error setting Wi-Fi configuration: {e:?}"
+                );
                 let _ = Timer::after(Duration::from_secs(5)).await;
                 continue;
             }
             match controller.start_async().await {
-                Ok(()) => esp_println::println!("[Log] Wi-Fi Controller started"),
+                Ok(()) => {
+                    esp_println::println!("[Log] Wi-Fi Controller started")
+                },
                 Err(e) => {
-                    esp_println::println!("Error starting Wi-Fi controller: {e:?}");
+                    esp_println::println!(
+                        "Error starting Wi-Fi controller: {e:?}"
+                    );
                     let _ = Timer::after(Duration::from_secs(5)).await;
                     continue;
-                }
+                },
             }
         }
 
@@ -93,7 +102,7 @@ async fn wifi_connection(mut controller: WifiController<'static>) {
                     esp_println::println!("Wi-Fi connect error: {e:?}");
                     let _ = Timer::after(Duration::from_secs(5)).await;
                     continue;
-                }
+                },
             }
         }
         controller.wait_for_event(WifiEvent::StaDisconnected).await;
@@ -101,32 +110,32 @@ async fn wifi_connection(mut controller: WifiController<'static>) {
 }
 
 async fn init_wifi(
-    timg0: TimerGroup<'static,TIMG0<'static>>, 
-    mut rng: Rng, 
-    wifi: WIFI<'static>, 
+    timg0: TimerGroup<'static, TIMG0<'static>>,
+    mut rng: Rng,
+    wifi: WIFI<'static>,
     radio_clk: RADIO_CLK<'static>,
-    spawner: Spawner
+    spawner: Spawner,
 ) -> Result<Stack<'static>, Error> {
-    
     let seed = (rng.random() as u64) << 32 | rng.random() as u64;
 
     esp_println::println!("Using random seed {:?}", seed);
-    
+
     let wifi_controller = esp_wifi::init(timg0.timer0, rng, radio_clk)?;
     let wifi_controller: &'static mut _ = WIFI_CONTROLLER.init(wifi_controller);
 
-    let (controller, wifi_interfaces) = esp_wifi::wifi::new(wifi_controller, wifi)?;
+    let (controller, wifi_interfaces) =
+        esp_wifi::wifi::new(wifi_controller, wifi)?;
     let wifi_interface = wifi_interfaces.sta;
 
     let stack_resources: &'static mut _ =
         STACK_RESOURCES.init(StackResources::new());
 
     let config = Config::dhcpv4(DhcpConfig::default());
-    let (stack, runner) = embassy_net::new(wifi_interface, config, stack_resources, seed);
+    let (stack, runner) =
+        embassy_net::new(wifi_interface, config, stack_resources, seed);
 
     spawner.must_spawn(wifi_connection(controller));
     spawner.must_spawn(run(runner));
-    
 
     esp_println::println!("Initialized stack resources");
 
@@ -135,9 +144,6 @@ async fn init_wifi(
 
 #[esp_hal_embassy::main]
 async fn main(spawner: Spawner) {
-
-    
-
     let peripherals = esp_hal::init(esp_hal::Config::default());
 
     heap_allocator!(size: HEAP_MEMORY_SIZE);
@@ -152,13 +158,20 @@ async fn main(spawner: Spawner) {
     //esp_println::println!("PASSWORD: {PASSWORD:?}");
     let rng = Rng::new(peripherals.RNG);
 
-    let stack = match init_wifi(timg0, rng, peripherals.WIFI, peripherals.RADIO_CLK, spawner).await {
+    let stack = match init_wifi(
+        timg0,
+        rng,
+        peripherals.WIFI,
+        peripherals.RADIO_CLK,
+        spawner,
+    )
+    .await
+    {
         Ok(stack) => stack,
         Err(e) => {
             esp_println::println!("WiFi init error: {:?}", e);
-            return 
-        }
-        
+            return;
+        },
     };
 
     loop {
@@ -167,11 +180,9 @@ async fn main(spawner: Spawner) {
         }
         embassy_time::Timer::after_millis(500).await;
     }
-    
+
     let _client = Client::new(&stack);
     esp_println::println!("Wasmbed Client created");
-
-
 }
 
 #[derive(Debug)]
@@ -191,7 +202,3 @@ impl From<esp_wifi::wifi::WifiError> for Error {
         Self::Wifi(error)
     }
 }
-
-
-
-
