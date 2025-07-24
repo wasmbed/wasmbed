@@ -33,6 +33,7 @@ esp-bootloader-esp-idf = { version = "0.1.0"}
 esp-alloc = { version = "0.8.0", default-features = false }
 esp-wifi = { version = "0.14.1", features = ["esp32c3", "wifi", "esp-alloc", "builtin-scheduler"] }
 
+rand_core = { version = "0.6.4", default-features = false }
 
 defmt = "0.3.0"
 defmt-serial = "0.10.0"

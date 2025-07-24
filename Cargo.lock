@@ -3727,6 +3727,7 @@ dependencies = [
  "heapless 0.8.0",
  "log",
  "panic-halt",
+ "rand_core 0.6.4",
  "riscv 0.13.0",
  "static_cell",
  "wasmbed-protocol-client",

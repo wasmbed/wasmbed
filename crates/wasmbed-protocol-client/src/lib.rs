@@ -22,7 +22,6 @@ use wasmbed_protocol::{
     Version,
 };
 
-use heapless::Vec;
 use minicbor::{decode, Encode as _, Encoder};
 
 /// Recommended default buffer sizes for MCU applications
@@ -116,7 +115,7 @@ impl<'d> Client<'d> {
         }
     }
 
-    pub async fn connect_tls<R: RngCore + CryptoRng>(
+    pub async fn connect_tls<R: CryptoRng + RngCore>(
         &mut self,
         endpoint: IpEndpoint,
         rng: &mut R,
@@ -155,21 +154,20 @@ impl<'d> Client<'d> {
             message: ClientMessage::Heartbeat,
         };
         self.next_id = self.next_id.next();
-        let buf = Vec::<u8, 32>::new();
-        {
-            let mut frame = [0u8; 32];
-            let mut enc = Encoder::new(&mut frame[..]);
-            let mut ctx = ();
-            envelope
-                .encode(&mut enc, &mut ctx)
-                .map_err(|_| ClientError::BufferOverflow)?;
-        };
-        let _ = self.send_data(&buf).await;
+
+        let mut frame = [0u8; 32];
+        let mut enc = Encoder::new(&mut frame[..]);
+        let mut ctx = ();
+        envelope
+            .encode(&mut enc, &mut ctx)
+            .map_err(|_| ClientError::BufferOverflow)?;
+
+        let _ = self.send_data(&frame[..]).await;
 
         let mut resp_buf = [0u8; 32];
         let n = self.recv_data(&mut resp_buf).await?;
 
-        let data = resp_buf.get(..n).ok_or(ClientError::InvalidResponse)?; // evita panic da slice
+        let data = resp_buf.get(..n).ok_or(ClientError::InvalidResponse)?;
 
         let server_env: ServerEnvelope =
             decode(data).map_err(|_| ClientError::InvalidResponse)?;
@@ -232,6 +230,7 @@ impl <'d> Drop for Client<'d> {
 }
 */
 
+#[derive(Debug)]
 pub enum ClientError {
     TlsError(TlsError),
     TcpError(TcpError),

@@ -24,13 +24,16 @@ use embassy_net::StackResources;
 use embassy_net::DhcpConfig;
 use embassy_net::Runner;
 use embassy_net::Stack;
+use embassy_net::IpEndpoint;
 
 use esp_hal::peripherals::RADIO_CLK;
 use esp_hal::peripherals::TIMG0;
 use esp_hal::peripherals::WIFI;
 
 use esp_hal::timer::timg::TimerGroup;
+
 use esp_hal::rng::Rng;
+use rand_core::{RngCore, CryptoRng};
 
 use wasmbed_protocol_client::{Client};
 
@@ -44,12 +47,47 @@ pub static STOP_WIFI_SIGNAL: Signal<CriticalSectionRawMutex, ()> =
 
 const HEAP_MEMORY_SIZE: usize = 72 * 1024;
 
-//const READ_BUF_SIZE: usize = 64;
-
 const SSID: &str = env!("WIFI_SSID");
 const PASSWORD: &str = env!("WIFI_PASS");
 
 esp_bootloader_esp_idf::esp_app_desc!();
+
+#[derive(Clone)]
+struct Esp32c3RngWrapper(Rng);
+
+impl From<Rng> for Esp32c3RngWrapper {
+    fn from(rng: Rng) -> Self {
+        Self(rng)
+    }
+}
+
+impl RngCore for Esp32c3RngWrapper {
+    fn next_u32(&mut self) -> u32 {
+        self.0.random()
+    }
+
+    fn next_u64(&mut self) -> u64 {
+        ((self.next_u32() as u64) << 32) | (self.next_u32() as u64)
+    }
+
+    fn fill_bytes(&mut self, dst: &mut [u8]) {
+        for chunk in dst.chunks_mut(4) {
+            let bytes = self.next_u32().to_le_bytes();
+            let (head, _) = bytes.split_at(chunk.len());
+            chunk.copy_from_slice(head);
+        }
+    }
+
+    fn try_fill_bytes(
+        &mut self,
+        dest: &mut [u8],
+    ) -> Result<(), rand_core::Error> {
+        self.fill_bytes(dest);
+        Ok(())
+    }
+}
+
+impl CryptoRng for Esp32c3RngWrapper {}
 
 #[embassy_executor::task]
 async fn run(mut runner: Runner<'static, WifiDevice<'static>>) {
@@ -155,7 +193,7 @@ async fn main(spawner: Spawner) {
 
     esp_println::println!("Firmware initialized");
     esp_println::println!("SSID: {SSID:?}");
-    //esp_println::println!("PASSWORD: {PASSWORD:?}");
+
     let rng = Rng::new(peripherals.RNG);
 
     let stack = match init_wifi(
@@ -181,8 +219,33 @@ async fn main(spawner: Spawner) {
         embassy_time::Timer::after_millis(500).await;
     }
 
-    let _client = Client::new(&stack);
+    let mut hal_rng = Esp32c3RngWrapper::from(rng);
+    let mut client = Client::new(&stack);
     esp_println::println!("Wasmbed Client created");
+    esp_println::println!("Test Tcp Connection with gateway");
+
+    let endpoint = IpEndpoint::new(
+        embassy_net::IpAddress::Ipv4(embassy_net::Ipv4Address::new(0, 0, 0, 0)),
+        4423,
+    );
+    if let Err(e) = client.connect_tls(endpoint, &mut hal_rng, "", "").await {
+        esp_println::println!("[ERR] TLS connect: {e:?}");
+        loop {
+            embassy_time::Timer::after_secs(5).await;
+        }
+    }
+    esp_println::println!("[OK] TLS handshake");
+    match client.send_heartbeat().await {
+        Ok(n) => esp_println::println!("[OK] Heartbeat ACK – {n:?} bytes"),
+        Err(e) => esp_println::println!("[ERR] Heartbeat: {e:?}"),
+    }
+
+    loop {
+        embassy_time::Timer::after_secs(30).await;
+        if let Err(e) = client.send_heartbeat().await {
+            esp_println::println!("[ERR] HB: {e:?}");
+        }
+    }
 }
 
 #[derive(Debug)]

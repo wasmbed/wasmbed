@@ -12,7 +12,7 @@ license.workspace = true
 embassy-net = { version = "0.6", default-features = false, features = ["dhcpv4", "dns", "tcp", "udp"] }
 embedded-tls = { version = "0.17", default-features = false}   
 
-rand_core   = { version = "0.6", default-features = false }
+rand_core = { version = "0.6.4", default-features = false }
 static_cell = { version = "2.1.0", default-features = false }
 heapless = { version = "0.8",  default-features = false }
 
@@ -24,6 +24,7 @@ features = [ "alloc" ]
 
 [dependencies.wasmbed-protocol]
 path = "../wasmbed-protocol"
+
 
 
 [lints]
