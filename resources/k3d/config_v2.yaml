@@ -1,0 +1,31 @@
+# SPDX-License-Identifier: MIT-0
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+
+metadata:
+  name: wasmbed
+
+servers: 1
+
+image: rancher/k3s:v1.33.2-k3s1
+
+ports:
+  - port: 4423:32423   
+    nodeFilters:
+      - loadbalancer
+
+
+volumes:
+  - volume: /home/francesco/Desktop/wasmbed/resources/dev-certs:/usr/share/wasmbed/resources/dev-certs
+    nodeFilters:
+      - server:*
+      - agent:*
+
+options:
+  k3d:
+    wait: true
+    disableLoadbalancer: false
+  kubeconfig:
+    updateDefaultKubeconfig: false
+    switchCurrentContext: false
+

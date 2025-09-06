@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0
+// Copyright © 2025 Wasmbed contributors
+
 #![no_std]
 #![no_main]
 
@@ -26,16 +29,16 @@ use embassy_net::Runner;
 use embassy_net::Stack;
 use embassy_net::IpEndpoint;
 
-use esp_hal::peripherals::RADIO_CLK;
 use esp_hal::peripherals::TIMG0;
 use esp_hal::peripherals::WIFI;
 
 use esp_hal::timer::timg::TimerGroup;
+use esp_hal::clock::CpuClock;
 
 use esp_hal::rng::Rng;
 use rand_core::{RngCore, CryptoRng};
 
-use wasmbed_protocol_client::{Client};
+use wasmbed_protocol_client::{Client,init_stack_and_runner};
 
 static STACK_RESOURCES: StaticCell<StackResources<3>> = StaticCell::new();
 
@@ -151,14 +154,13 @@ async fn init_wifi(
     timg0: TimerGroup<'static, TIMG0<'static>>,
     mut rng: Rng,
     wifi: WIFI<'static>,
-    radio_clk: RADIO_CLK<'static>,
     spawner: Spawner,
 ) -> Result<Stack<'static>, Error> {
     let seed = (rng.random() as u64) << 32 | rng.random() as u64;
 
     esp_println::println!("Using random seed {:?}", seed);
 
-    let wifi_controller = esp_wifi::init(timg0.timer0, rng, radio_clk)?;
+    let wifi_controller = esp_wifi::init(timg0.timer0, rng)?;
     let wifi_controller: &'static mut _ = WIFI_CONTROLLER.init(wifi_controller);
 
     let (controller, wifi_interfaces) =
@@ -170,19 +172,31 @@ async fn init_wifi(
 
     let config = Config::dhcpv4(DhcpConfig::default());
     let (stack, runner) =
-        embassy_net::new(wifi_interface, config, stack_resources, seed);
+        init_stack_and_runner(wifi_interface, config, stack_resources, seed);
+
+    
 
     spawner.must_spawn(wifi_connection(controller));
     spawner.must_spawn(run(runner));
 
     esp_println::println!("Initialized stack resources");
 
+    loop {
+        if let Some(config) = stack.config_v4() {
+            esp_println::println!("IP address assigned: {}", config.address.address());
+            break;
+        } else {
+            esp_println::println!("Waiting for IP address...");
+            Timer::after(Duration::from_millis(5000)).await;
+        }
+    }
+
     Ok(stack)
 }
 
 #[esp_hal_embassy::main]
 async fn main(spawner: Spawner) {
-    let peripherals = esp_hal::init(esp_hal::Config::default());
+    let peripherals = esp_hal::init(esp_hal::Config::default().with_cpu_clock(CpuClock::max()));
 
     heap_allocator!(size: HEAP_MEMORY_SIZE);
 
@@ -200,7 +214,6 @@ async fn main(spawner: Spawner) {
         timg0,
         rng,
         peripherals.WIFI,
-        peripherals.RADIO_CLK,
         spawner,
     )
     .await
@@ -219,13 +232,13 @@ async fn main(spawner: Spawner) {
         embassy_time::Timer::after_millis(500).await;
     }
 
-    let mut hal_rng = Esp32c3RngWrapper::from(rng);
+    let mut hal_rng = Esp32c3RngWrapper::from(rng.clone());
     let mut client = Client::new(&stack);
     esp_println::println!("Wasmbed Client created");
     esp_println::println!("Test Tcp Connection with gateway");
-
     let endpoint = IpEndpoint::new(
-        embassy_net::IpAddress::Ipv4(embassy_net::Ipv4Address::new(0, 0, 0, 0)),
+        embassy_net::IpAddress::Ipv4(embassy_net::Ipv4Address::new(192,168,1,3)),
+       //30423,
         4423,
     );
     if let Err(e) = client.connect_tls(endpoint, &mut hal_rng, "", "").await {

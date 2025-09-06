@@ -1,18 +1,26 @@
+// SPDX-License-Identifier: AGPL-3.0
+// Copyright © 2025 Wasmbed contributors
+
 #![no_std]
 #![no_main]
 #![deny(unsafe_code)]
 
+mod certs;
+
+use embedded_tls::{Certificate, NoVerify};
 use core::marker::PhantomData;
 use embassy_net::{
     tcp::{ConnectError, TcpSocket},
-    IpEndpoint, Stack,
+    IpEndpoint, Stack, Runner, StackResources, Config,
+    driver::{Driver},
 };
 
 use embassy_net::tcp::Error as TcpError;
 use embedded_tls::{
-    Aes128GcmSha256, MaxFragmentLength, NoVerify, TlsConfig, TlsConnection,
-    TlsContext, TlsError,
+    Aes128GcmSha256, MaxFragmentLength, TlsConfig, TlsConnection,
+    TlsContext, TlsError, Ed25519Provider
 };
+
 use rand_core::{CryptoRng, RngCore};
 use static_cell::StaticCell;
 
@@ -37,66 +45,19 @@ static TX_BUFF: StaticCell<[u8; TX_BUFFER_SIZE]> = StaticCell::new();
 static TLS_RX_BUFF: StaticCell<[u8; TLS_RX_BUFFER_SIZE]> = StaticCell::new();
 static TLS_TX_BUFF: StaticCell<[u8; TLS_TX_BUFFER_SIZE]> = StaticCell::new();
 
-// Maybe is not useful
-/*
-pub fn init_stack(driver: &'static dyn Driver) -> &'static Stack<'static> {
-    let config = Config::dhcpv4(Default::default());
-    let resources = RESOURCES.init(StackResources::new());
-    STACK.init(Stack::new(driver, config, resources))
-}
-
-
-pub struct NoNameServerVerifier<'a> {
-    ca_cert_der: &'a [u8],
-}
-
-impl<'a> NoNameServerVerifier<'a> {
-    pub fn new(ca_cert: &'a CertificateDer<'static>) -> Self {
-        Self {
-            ca_cert_der: ca_cert.as_ref(),
-        }
-    }
-}
-
-
-impl<'a, CipherSuite> TlsVerifier<'a, CipherSuite> for NoNameServerVerifier
+/// Wrapper for Stack Initialization
+pub fn init_stack_and_runner<'d, D, const SOCK: usize>(
+    driver: D,
+    config: Config,
+    resources: &'d mut StackResources<SOCK>,
+    random_seed: u64,
+) -> (Stack<'d>, Runner<'d, D>)
 where
-    CipherSuite: TlsCipherSuite,
+    D: Driver + 'd,
 {
-
-    fn new(_host: &Option<&str>, ca_cert_der: &'a [u8]) -> Self {
-        NoNameServerVerifier { ca_cert_der }
-    }
-
-    fn verify_certificate(
-        &mut self,
-        _transcript: &CipherSuite::Hash,
-        _ca: &Option<Certificate<'_>>,
-        _cert: CertificateRef<'_>,
-    ) -> Result<(), TlsError>{
-
-        let (_, server_cert) = X509Certificate::from_der(cert.raw)
-            .map_err(|_| TlsError::CertificateParsingFailed)?;
-
-        let (_, ca_cert) = X509Certificate::from_der(self.ca_cert_der)
-            .map_err(|_| TlsError::CertificateParsingFailed)?;
-
-        server_cert
-            .verify_signature(Some(&ca_cert.tbs_certificate.subject_pki))
-            .map_err(|_| TlsError::CertificateVerificationFailed)?;
-
-        Ok(())
-    }
-
-    fn verify_signature(
-        &mut self,
-        _verify: CertificateVerify<'_>,
-    ) -> Result<(), TlsError> {
-        todo!()
-    }
+    embassy_net::new(driver, config, resources, random_seed)
 }
 
-*/
 /// Tcp + TLS Client
 pub struct Client<'d> {
     stack: &'d Stack<'d>,
@@ -121,8 +82,8 @@ impl<'d> Client<'d> {
         rng: &mut R,
         //server_ca: &ServerAuthority,
         // identity: &ClientIdentity,
-        server_ca: &str,
-        identity: &str,
+        _server_ca: &str,
+        _identity: &str,
     ) -> Result<(), ClientError> {
         let rx_buff = RX_BUFF.init([0; RX_BUFFER_SIZE]);
         let tx_buff = TX_BUFF.init([0; TX_BUFFER_SIZE]);
@@ -133,12 +94,22 @@ impl<'d> Client<'d> {
             .connect(endpoint)
             .await
             .map_err(|_| ClientError::NotConnected)?;
-        let tls_config = self.build_tls_config(server_ca, identity)?;
-        let tls_context = TlsContext::new(&tls_config, rng);
+        
+        let ca_der = certs::SERVER_CA_DER;
+        let client_cert = certs::CLIENT_CERT_DER;
+        let client_key = certs::CLIENT_PRIVATE_KEY_DER;
+        let tls_config = TlsConfig::new()
+            .with_ca(Certificate::X509(ca_der))
+            .with_cert(Certificate::X509(client_cert))
+            .with_priv_key(client_key)
+            .with_max_fragment_length(MaxFragmentLength::Bits10);
+        
+        let tls_context = 
+            TlsContext::new(&tls_config, Ed25519Provider::new::<Aes128GcmSha256>(rng));
         let mut tls_connection =
-            TlsConnection::<'d>::new(socket, tls_rx_buffer, tls_tx_buffer);
+            TlsConnection::<'_>::new(socket, tls_rx_buffer, tls_tx_buffer);
         tls_connection
-            .open::<_, NoVerify>(tls_context)
+            .open(tls_context)
             .await
             .map_err(ClientError::from)?; // need a TLSverifier 
         self.tls_connection = Some(tls_connection);
@@ -202,33 +173,8 @@ impl<'d> Client<'d> {
         }
         Ok(())
     }
-
-    fn build_tls_config<'a>(
-        &self,
-        // server_ca: &'a ServerAuthority,
-        // identity: &'a ClientIdentity,
-        _server_ca: &str,
-        _identity: &str,
-    ) -> Result<TlsConfig<'a, Aes128GcmSha256>, ClientError> {
-        let config = TlsConfig::new()
-            // .with_ca(Certificate::X509(server_ca.certificate().as_ref()))
-            //.with_cert(Certificate::X509(identity.certificate().as_ref()))
-            .with_max_fragment_length(MaxFragmentLength::Bits10);
-        Ok(config)
-    }
 }
 
-/*
-impl <'d> Drop for Client<'d> {
-    fn drop(&mut self) {
-        if let Some(mut tls) = self.tls_connection.take() {
-            #[cfg(feature = "defmt")]
-            defmt::warn!("TLS connection dropped without proper close");
-
-        }
-    }
-}
-*/
 
 #[derive(Debug)]
 pub enum ClientError {
