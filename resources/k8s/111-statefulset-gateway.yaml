@@ -19,7 +19,7 @@ spec:
       serviceAccountName: wasmbed-gateway
       containers:
         - name: wasmbed-gateway
-          image: wasmbed-gateway:mk1zndvpsjkmxkrcwx7r74wdc0jmljb8
+          image: wasmbed-gateway:k542jqkwbjqjkalqb2d0nbhfpqkjfszy
           ports:
             - containerPort: 4423
               name: wasmbed-gateway
@@ -51,3 +51,4 @@ spec:
         - name: wasmbed-certs
           hostPath:
             path: /usr/share/wasmbed/resources/dev-certs
+

@@ -38,7 +38,7 @@ use esp_hal::clock::CpuClock;
 use esp_hal::rng::Rng;
 use rand_core::{RngCore, CryptoRng};
 
-use wasmbed_protocol_client::{Client,init_stack_and_runner};
+use wasmbed_protocol_client::{Client, init_stack_and_runner};
 
 static STACK_RESOURCES: StaticCell<StackResources<3>> = StaticCell::new();
 
@@ -174,8 +174,6 @@ async fn init_wifi(
     let (stack, runner) =
         init_stack_and_runner(wifi_interface, config, stack_resources, seed);
 
-    
-
     spawner.must_spawn(wifi_connection(controller));
     spawner.must_spawn(run(runner));
 
@@ -183,7 +181,10 @@ async fn init_wifi(
 
     loop {
         if let Some(config) = stack.config_v4() {
-            esp_println::println!("IP address assigned: {}", config.address.address());
+            esp_println::println!(
+                "IP address assigned: {}",
+                config.address.address()
+            );
             break;
         } else {
             esp_println::println!("Waiting for IP address...");
@@ -196,7 +197,9 @@ async fn init_wifi(
 
 #[esp_hal_embassy::main]
 async fn main(spawner: Spawner) {
-    let peripherals = esp_hal::init(esp_hal::Config::default().with_cpu_clock(CpuClock::max()));
+    let peripherals = esp_hal::init(
+        esp_hal::Config::default().with_cpu_clock(CpuClock::max()),
+    );
 
     heap_allocator!(size: HEAP_MEMORY_SIZE);
 
@@ -210,14 +213,7 @@ async fn main(spawner: Spawner) {
 
     let rng = Rng::new(peripherals.RNG);
 
-    let stack = match init_wifi(
-        timg0,
-        rng,
-        peripherals.WIFI,
-        spawner,
-    )
-    .await
-    {
+    let stack = match init_wifi(timg0, rng, peripherals.WIFI, spawner).await {
         Ok(stack) => stack,
         Err(e) => {
             esp_println::println!("WiFi init error: {:?}", e);
@@ -232,13 +228,15 @@ async fn main(spawner: Spawner) {
         embassy_time::Timer::after_millis(500).await;
     }
 
-    let mut hal_rng = Esp32c3RngWrapper::from(rng.clone());
+    let mut hal_rng = Esp32c3RngWrapper::from(rng);
     let mut client = Client::new(&stack);
     esp_println::println!("Wasmbed Client created");
     esp_println::println!("Test Tcp Connection with gateway");
     let endpoint = IpEndpoint::new(
-        embassy_net::IpAddress::Ipv4(embassy_net::Ipv4Address::new(192,168,1,3)),
-       //30423,
+        embassy_net::IpAddress::Ipv4(embassy_net::Ipv4Address::new(
+            192, 168, 1, 6,
+        )),
+        //30423,
         4423,
     );
     if let Err(e) = client.connect_tls(endpoint, &mut hal_rng, "", "").await {
@@ -248,16 +246,12 @@ async fn main(spawner: Spawner) {
         }
     }
     esp_println::println!("[OK] TLS handshake");
-    match client.send_heartbeat().await {
-        Ok(n) => esp_println::println!("[OK] Heartbeat ACK – {n:?} bytes"),
-        Err(e) => esp_println::println!("[ERR] Heartbeat: {e:?}"),
-    }
-
     loop {
-        embassy_time::Timer::after_secs(30).await;
-        if let Err(e) = client.send_heartbeat().await {
-            esp_println::println!("[ERR] HB: {e:?}");
+        match client.send_heartbeat().await {
+            Ok(n) => esp_println::println!("[OK] Heartbeat ACK – {n:?} bytes"),
+            Err(e) => esp_println::println!("[ERR] Heartbeat: {e:?}"),
         }
+        embassy_time::Timer::after_secs(30).await;
     }
 }
 

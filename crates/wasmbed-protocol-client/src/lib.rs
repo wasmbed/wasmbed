@@ -7,7 +7,7 @@
 
 mod certs;
 
-use embedded_tls::{Certificate, NoVerify};
+use embedded_tls::Certificate;
 use core::marker::PhantomData;
 use embassy_net::{
     tcp::{ConnectError, TcpSocket},
@@ -17,8 +17,8 @@ use embassy_net::{
 
 use embassy_net::tcp::Error as TcpError;
 use embedded_tls::{
-    Aes128GcmSha256, MaxFragmentLength, TlsConfig, TlsConnection,
-    TlsContext, TlsError, Ed25519Provider
+    Aes128GcmSha256, MaxFragmentLength, TlsConfig, TlsConnection, TlsContext,
+    TlsError, Ed25519Provider,
 };
 
 use rand_core::{CryptoRng, RngCore};
@@ -94,7 +94,7 @@ impl<'d> Client<'d> {
             .connect(endpoint)
             .await
             .map_err(|_| ClientError::NotConnected)?;
-        
+
         let ca_der = certs::SERVER_CA_DER;
         let client_cert = certs::CLIENT_CERT_DER;
         let client_key = certs::CLIENT_PRIVATE_KEY_DER;
@@ -103,15 +103,17 @@ impl<'d> Client<'d> {
             .with_cert(Certificate::X509(client_cert))
             .with_priv_key(client_key)
             .with_max_fragment_length(MaxFragmentLength::Bits10);
-        
-        let tls_context = 
-            TlsContext::new(&tls_config, Ed25519Provider::new::<Aes128GcmSha256>(rng));
+
+        let tls_context = TlsContext::new(
+            &tls_config,
+            Ed25519Provider::new::<Aes128GcmSha256>(rng),
+        ); // need a TLSverifier 
         let mut tls_connection =
             TlsConnection::<'_>::new(socket, tls_rx_buffer, tls_tx_buffer);
         tls_connection
             .open(tls_context)
             .await
-            .map_err(ClientError::from)?; // need a TLSverifier 
+            .map_err(ClientError::from)?;
         self.tls_connection = Some(tls_connection);
         Ok(())
     }
@@ -126,26 +128,92 @@ impl<'d> Client<'d> {
         };
         self.next_id = self.next_id.next();
 
-        let mut frame = [0u8; 32];
-        let mut enc = Encoder::new(&mut frame[..]);
-        let mut ctx = ();
-        envelope
-            .encode(&mut enc, &mut ctx)
-            .map_err(|_| ClientError::BufferOverflow)?;
+        let mut frame = [0u8; 64];
 
-        let _ = self.send_data(&frame[..]).await;
+        let capacity = frame.len();
 
-        let mut resp_buf = [0u8; 32];
-        let n = self.recv_data(&mut resp_buf).await?;
+        // --- encode ---
+        let used = {
+            let mut enc = Encoder::new(&mut frame[..]);
+            let mut ctx = ();
+            if envelope.encode(&mut enc, &mut ctx).is_err() {
+                return Err(ClientError::BufferOverflow);
+            }
+            let remaining = enc.writer().as_ref().len();
+            capacity.saturating_sub(remaining)
+        };
+        if used == 0 {
+            return Err(ClientError::BufferOverflow);
+        }
 
-        let data = resp_buf.get(..n).ok_or(ClientError::InvalidResponse)?;
+        // --- build packet ---
+        let mut packet = [0u8; 68];
+        let used_u32 =
+            u32::try_from(used).map_err(|_| ClientError::BufferOverflow)?;
+        packet
+            .get_mut(..4)
+            .ok_or(ClientError::BufferOverflow)?
+            .copy_from_slice(&used_u32.to_be_bytes());
 
+        let end = 4usize
+            .checked_add(used)
+            .ok_or(ClientError::BufferOverflow)?;
+        packet
+            .get_mut(4..end)
+            .ok_or(ClientError::BufferOverflow)?
+            .copy_from_slice(
+                frame.get(..used).ok_or(ClientError::BufferOverflow)?,
+            );
+
+        let to_send = packet.get(..end).ok_or(ClientError::BufferOverflow)?;
+        self.write_all_tls(to_send).await?;
+
+        // --- read prefix ---
+        let mut hdr = [0u8; 4];
+        let mut read = 0;
+        while read < 4 {
+            let n = self
+                .recv_data(
+                    hdr.get_mut(read..).ok_or(ClientError::InvalidResponse)?,
+                )
+                .await?;
+            if n == 0 {
+                return Err(ClientError::Timeout);
+            }
+            read = read.saturating_add(n);
+        }
+
+        let resp_len = u32::from_be_bytes(hdr) as usize;
+        if resp_len == 0 || resp_len > frame.len() {
+            return Err(ClientError::InvalidResponse);
+        }
+
+        // --- read payload ---
+        let mut resp_buf = [0u8; 64];
+        let mut read = 0;
+        while read < resp_len {
+            let n = self
+                .recv_data(
+                    resp_buf
+                        .get_mut(read..resp_len)
+                        .ok_or(ClientError::InvalidResponse)?,
+                )
+                .await?;
+            if n == 0 {
+                return Err(ClientError::Timeout);
+            }
+            read = read.saturating_add(n);
+        }
+
+        let data = resp_buf
+            .get(..resp_len)
+            .ok_or(ClientError::InvalidResponse)?;
         let server_env: ServerEnvelope =
             decode(data).map_err(|_| ClientError::InvalidResponse)?;
 
         match server_env.message {
             ServerMessage::HeartbeatAck if server_env.message_id == sent_id => {
-                Ok(n)
+                Ok(resp_len)
             },
             _ => Err(ClientError::UnexpectedResponse),
         }
@@ -157,6 +225,24 @@ impl<'d> Client<'d> {
             None => Err(ClientError::NotConnected),
         }
     }
+
+    async fn write_all_tls(
+        &mut self,
+        mut data: &[u8],
+    ) -> Result<(), ClientError> {
+        while !data.is_empty() {
+            let n = self.send_data(data).await?; // accoda nel record
+            if n == 0 {
+                return Err(ClientError::Timeout);
+            }
+            data = data.get(n..).ok_or(ClientError::BufferOverflow)?;
+        }
+        match &mut self.tls_connection {
+            Some(tls) => tls.flush().await.map_err(ClientError::from),
+            None => Err(ClientError::NotConnected),
+        }
+    }
+
     pub async fn recv_data(
         &mut self,
         data: &mut [u8],
@@ -174,7 +260,6 @@ impl<'d> Client<'d> {
         Ok(())
     }
 }
-
 
 #[derive(Debug)]
 pub enum ClientError {
