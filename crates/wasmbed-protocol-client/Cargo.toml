@@ -10,7 +10,7 @@ license.workspace = true
 
 [dependencies]
 embassy-net = { version = "0.7", default-features = false, features = ["dhcpv4", "dns", "tcp"] }
-embedded-tls = { git = "https://github.com/fratrung/embedded-tls", rev = "04408b8cc371bb72f61e7e10b2f5558d4542e918", default-features = false, features = ['alloc'] }
+embedded-tls = { git = "https://github.com/fratrung/embedded-tls", branch = "dev/ed25519-verifier", default-features = false, features = ["alloc"] }
 
 rand_core = { version = "0.6.4", default-features = false }
 static_cell = { version = "2.1.0", default-features = false }

@@ -234,7 +234,7 @@ async fn main(spawner: Spawner) {
     esp_println::println!("Test Tcp Connection with gateway");
     let endpoint = IpEndpoint::new(
         embassy_net::IpAddress::Ipv4(embassy_net::Ipv4Address::new(
-            192, 168, 1, 6,
+            192, 168, 1, 10,
         )),
         //30423,
         4423,
@@ -251,7 +251,7 @@ async fn main(spawner: Spawner) {
             Ok(n) => esp_println::println!("[OK] Heartbeat ACK – {n:?} bytes"),
             Err(e) => esp_println::println!("[ERR] Heartbeat: {e:?}"),
         }
-        embassy_time::Timer::after_secs(30).await;
+        embassy_time::Timer::after_secs(3).await;
     }
 }
 
