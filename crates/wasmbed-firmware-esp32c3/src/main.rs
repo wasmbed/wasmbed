@@ -52,8 +52,30 @@ const HEAP_MEMORY_SIZE: usize = 72 * 1024;
 
 const SSID: &str = env!("WIFI_SSID");
 const PASSWORD: &str = env!("WIFI_PASS");
+const GATEWAY_IP: &str = env!("GATEWAY_IP");      
+const GATEWAY_PORT: &str = env!("GATEWAY_PORT"); 
 
 esp_bootloader_esp_idf::esp_app_desc!();
+
+fn make_endpoint() -> IpEndpoint {
+    let mut parts = [0u8; 4];
+    let mut i = 0;
+
+    for s in GATEWAY_IP.split('.') {
+        parts[i] = s.parse::<u8>().expect("Invalid IP segment");
+        i += 1;
+        if i > 3 {
+            break;
+        }
+    }
+
+    let port: u16 = GATEWAY_PORT.parse().expect("Invalid port");
+
+    IpEndpoint::new(
+        embassy_net::IpAddress::Ipv4(embassy_net::Ipv4Address::new(parts[0], parts[1], parts[2], parts[3])),
+        port,
+    )
+}
 
 #[derive(Clone)]
 struct Esp32c3RngWrapper(Rng);
@@ -232,13 +254,8 @@ async fn main(spawner: Spawner) {
     let mut client = Client::new(&stack);
     esp_println::println!("Wasmbed Client created");
     esp_println::println!("Test Tcp Connection with gateway");
-    let endpoint = IpEndpoint::new(
-        embassy_net::IpAddress::Ipv4(embassy_net::Ipv4Address::new(
-            192, 168, 1, 10,
-        )),
-        //30423,
-        4423,
-    );
+    
+    let endpoint: IpEndpoint = make_endpoint();
     if let Err(e) = client.connect_tls(endpoint, &mut hal_rng, "", "").await {
         esp_println::println!("[ERR] TLS connect: {e:?}");
         loop {
