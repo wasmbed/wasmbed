@@ -1,6 +1,6 @@
 # ESP32-C3 Heartbeat Firmware Demo
 
-This repository contains a demo firmware for the **ESP32-C3** microcontroller.  
+This crate contains a demo firmware for the **ESP32-C3** microcontroller.  
 The firmware establishes a secure **mTLS connection** with a deployed gateway and periodically sends heartbeat messages.  
 
 ## How It Works
